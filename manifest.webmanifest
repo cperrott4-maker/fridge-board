@@ -1,0 +1,11 @@
+{
+  "name": "Fridge Board",
+  "short_name": "Fridge",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "start_url": "./",
+  "scope": "./",
+  "background_color": "#F2ECDF",
+  "theme_color": "#F2ECDF",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
