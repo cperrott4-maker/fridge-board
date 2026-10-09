@@ -900,14 +900,15 @@ setInterval(function(){ renderToday(); renderSoon(); }, 300000);
 try{ if(navigator.wakeLock){ var req=function(){ navigator.wakeLock.request('screen').catch(function(){}); }; req(); document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') req(); }); } }catch(e){}
 
 /* data: inline snapshot (preview), else the Sheet script named in ?api=&key= or saved on this device, else a local data.json */
-function cfg(){ try{ var q=new URLSearchParams(location.search); if(q.get('api')&&q.get('key')){ var c={api:q.get('api'), key:q.get('key')}; store('cfg',c); history.replaceState(null,'',location.pathname); return c; } return store('cfg'); }catch(e){ return null; } }
+function cfg(){ try{ var q=new URLSearchParams(location.search); if(q.get('api')&&q.get('key')){ var c={api:cleanApi(q.get('api')), key:q.get('key').replace(/[^A-Za-z0-9]/g,'')}; store('cfg',c); history.replaceState(null,'',location.pathname); return c; } return store('cfg'); }catch(e){ return null; } }
 function dataUrl(){ var c=cfg(); return c? c.api+(c.api.indexOf('?')>-1?'&':'?')+'key='+encodeURIComponent(c.key) : 'data.json'; }
 function load(first){
   return fetch(dataUrl(),{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(d){ if(d&&d.error) throw new Error(d.error); D=d; $('setup').hidden=true; render(); })
     .catch(function(e){ if(first){ $('setup').hidden=false; var c=cfg(); if(c){ $('su-api').value=c.api; $('su-err').textContent='Could not reach the board\u2019s data ('+e.message+'). Check the address and key.'; } } });
 }
-$('setup-form').addEventListener('submit', function(e){ e.preventDefault(); var api=$('su-api').value.trim(), key=$('su-key').value.trim(); if(!api||!key){ $('su-err').textContent='Both boxes are needed.'; return; } store('cfg',{api:api,key:key}); $('su-err').textContent='Connecting\u2026'; load(true); });
+function cleanApi(v){ v=String(v||'').trim(); var m=v.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/); if(m) return m[0]; try{ var u=new URL(v); var q=u.searchParams.get('q')||u.searchParams.get('url'); if(q) return cleanApi(decodeURIComponent(q)); }catch(x){} return v.split('?')[0]; }
+$('setup-form').addEventListener('submit', function(e){ e.preventDefault(); var api=cleanApi($('su-api').value), key=$('su-key').value.trim().replace(/[^A-Za-z0-9]/g,''); $('su-api').value=api; if(!api||!key){ $('su-err').textContent='Both boxes are needed.'; return; } store('cfg',{api:api,key:key}); $('su-err').textContent='Connecting\u2026'; load(true); });
 if(D) render();
 else { load(true); setInterval(function(){ load(false); }, 600000); }
 })();
