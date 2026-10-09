@@ -766,7 +766,7 @@ function renderProduct(){
     var inc = p.incoming_units? '<span style="color:var(--blue);font-weight:600">+'+p.incoming_units+' coming'+(p.incoming_eta?' ~'+parseDay(p.incoming_eta).getDate()+' '+MON[parseDay(p.incoming_eta).getMonth()].slice(0,3):'')+'</span>' : '<span></span>';
     var name=p.title.replace(' - ',' · ').replace(/^Daisy Asymmetric Top/,'Daisy Asymmetric');
     h+='<div class="srow lvl-'+x.lvl+'"><div class="thumb" style="background-image:url(\''+(p.thumb||p.image_url||'')+'\')"></div>'+
-      '<div style="min-width:0"><div class="sname">'+esc(name)+'</div><div class="smeta">'+p.inventory_total+' left · '+perwk+' a week'+(x.gaps.length?' · <span class="gap">'+x.gaps.join(', ')+' out</span>':'')+'</div></div>'+
+      '<div style="min-width:0"><div class="sname">'+esc(name)+'</div><div class="smeta">'+p.inventory_total+' left · '+(p.units_sold_7d||0)+' sold last 7 days'+(x.gaps.length?' · <span class="gap">'+x.gaps.join(', ')+' out</span>':'')+'</div></div>'+
       '<div><div class="bar"><div class="fillb" style="width:'+pct+'%"></div><div class="lead" style="left:'+lp+'%"></div></div><div class="bar-cap"><span>'+x.lead+'-day restock</span>'+inc+'</div></div>'+
       '<div class="cover"><b class="num">'+(x.cover>=999?'–':x.cover>MAXD?'180+':Math.round(x.cover))+'</b><span>days left</span></div></div>'+sizesPanel(p);
   });
