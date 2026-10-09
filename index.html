@@ -275,10 +275,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 /* ads */
 #stl-ads{grid-template-columns:minmax(0,2.4fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
 .adtable{width:100%;border-collapse:collapse;font-size:13.5px}
-.adtable th{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.adtable th{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:right;padding:6px 5px;border-bottom:1px solid var(--line);white-space:nowrap}
 .adtable th:first-child,.adtable td:first-child{text-align:left;padding-left:0}
-.adtable td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500}
-.adtable td.nm{font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.adtable td{padding:9px 5px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500}
+.adtable td.nm{font-weight:600;max-width:190px;overflow:hidden;text-overflow:ellipsis}
 .adtable td.nm small{display:block;font-size:11.5px;color:var(--ink-3);font-weight:500}
 .adtable tr.mk td{padding-top:16px;border-bottom:0}
 .tone-red{color:var(--red);font-weight:600} .tone-amber{color:var(--amber);font-weight:600} .tone-green{color:var(--green);font-weight:600}
@@ -441,7 +441,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
   <main class="view" id="stl-ads" hidden>
     <section class="card" style="grid-row:span 2">
       <div class="ch"><span class="eyebrow">Meta ad sets</span>
-        <div class="seg" role="group" aria-label="Window"><button data-aw="1" aria-pressed="false">Today</button><button data-aw="3" aria-pressed="true">3 days</button><button data-aw="7" aria-pressed="false">7 days</button></div></div>
+        <div class="seg" role="group" aria-label="Window"><button data-aw="1" aria-pressed="false">Yesterday</button><button data-aw="3" aria-pressed="true">3 days</button><button data-aw="7" aria-pressed="false">7 days</button></div></div>
       <div class="scroll adwrap" id="a-table" style="flex:1"></div>
     </section>
     <section class="card"><div class="ch"><span class="eyebrow">Email, last 7 days</span></div><div id="a-email" class="scroll" style="flex:1"></div></section>
@@ -651,20 +651,23 @@ function renderNumbers(){
   var days=(D.stl&&D.stl.daily)||[]; if(!days.length) return;
   days.forEach(function(d){ d.spend=(d.meta||0)+(d.google||0); });
   var t=days[days.length-1], y=days[days.length-2]||{};
-  var r1=t.revenue, r3=sumWin(days,'revenue',3,true), r7=sumWin(days,'revenue',7,true);
-  var s1=t.spend, s3=sumWin(days,'spend',3,true), s7=sumWin(days,'spend',7,true);
-  var v1=t.metaValue, v3=sumWin(days,'metaValue',3,true), v7=sumWin(days,'metaValue',7,true);
-  var m1=t.meta, m3=sumWin(days,'meta',3,true), m7=sumWin(days,'meta',7,true);
+  var r1=t.revenue, r3=sumWin(days,'revenue',3,true), r7=sumWin(days,'revenue',7,true), r14=sumWin(days,'revenue',14,true);
+  var s3=sumWin(days,'spend',3,true), s7=sumWin(days,'spend',7,true), s14=sumWin(days,'spend',14,true);
+  var v3=sumWin(days,'metaValue',3,true), v7=sumWin(days,'metaValue',7,true), v14=sumWin(days,'metaValue',14,true);
+  var m3=sumWin(days,'meta',3,true), m7=sumWin(days,'meta',7,true), m14=sumWin(days,'meta',14,true);
   var noGoogle = days.every(function(d){ return d.google==null; });
+  // A window is only quotable when every complete day in it has a Meta spend row (rule 79: same days on every input).
+  var gap=function(n){ var w=days.slice(0,days.length-1).slice(-n); return !w.length || w.some(function(d){ return d.meta==null; }); };
+  var g1=gap(1), g3=gap(3), g7=gap(7), g14=gap(14), WAIT='waiting on Meta spend';
   function tile(id,label,big,cap,rows,note){
     $(id).innerHTML='<span class="eyebrow">'+label+'</span><div class="big num">'+big+'</div><div class="cap">'+cap+'</div><div class="rows">'+
       rows.map(function(r){ return '<div><div class="v num">'+r[1]+'</div><div class="l">'+r[0]+'</div></div>'; }).join('')+'</div>'+(note?'<div class="note">'+note+'</div>':'');
   }
-  var x=function(a,b){ return b? (a/b).toFixed(2)+'<small>×</small>':'–'; }, xs=function(a,b){ return b? (a/b).toFixed(2)+'×':'–'; };
+  var x=function(a,b,g){ return !g&&b? (a/b).toFixed(2)+'<small>×</small>':'–'; }, xs=function(a,b,g){ return !g&&b? (a/b).toFixed(2)+'×':'–'; };
   tile('k-rev','Revenue', money(r1), 'today so far · '+t.orders+' orders', [['Yesterday',kfmt(y.revenue)],['3 days',kfmt(r3)],['7 days',kfmt(r7)]]);
-  tile('k-mer','MER', x(r1,s1), 'revenue ÷ all ad spend, today', [['Yesterday',xs(y.revenue,y.spend)],['3 days',xs(r3,s3)],['7 days',xs(r7,s7)]], noGoogle?'Meta only until Google Ads is connected':'');
-  tile('k-roas','Meta ROAS', x(v1,m1), 'Meta-reported value ÷ spend, today', [['Yesterday',xs(y.metaValue,y.meta)],['3 days',xs(v3,m3)],['7 days',xs(v7,m7)]]);
-  tile('k-spend','Ad spend', money(s1), 'today so far', [['Meta 7d',kfmt(m7)],['Google 7d',noGoogle?'–':kfmt(sumWin(days,'google',7,true))],['All 7d',kfmt(s7)]], noGoogle?'Google Ads not connected yet':'');
+  tile('k-mer','MER', x(y.revenue,y.spend,g1), g1?WAIT:'revenue ÷ all ad spend, yesterday', [['3 days',xs(r3,s3,g3)],['7 days',xs(r7,s7,g7)],['14 days',xs(r14,s14,g14)]], g7?'':(noGoogle?'Meta only until Google Ads is connected':''));
+  tile('k-roas','Meta ROAS', x(y.metaValue,y.meta,g1), g1?WAIT:'Meta-reported value ÷ spend, yesterday', [['3 days',xs(v3,m3,g3)],['7 days',xs(v7,m7,g7)],['14 days',xs(v14,m14,g14)]]);
+  tile('k-spend','Ad spend', g1?'–':money(y.spend), g1?WAIT:'yesterday, Meta'+(noGoogle?'':' + Google'), [['Meta 7d',g7?'–':kfmt(m7)],['Google 7d',noGoogle?'–':kfmt(sumWin(days,'google',7,true))],['All 7d',g7?'–':kfmt(s7)]], noGoogle?'Google Ads not connected yet':'');
 }
 function drawChart(){
   var days=(D.stl&&D.stl.daily)||[], box=$('chart'); if(!days.length||!box.clientWidth) return;
@@ -717,22 +720,23 @@ function renderAds(){
   var A=(D.stl&&D.stl.ads)||{}; setPressed('[data-aw]','data-aw',S.aw);
   var sets=(A.adsets||[]), w='w'+S.aw;
   var cols=[['Spend','spend',function(v){return money(v);}],['Purch.','purchases',function(v){return v==null?'–':v;}],['CPA','cpa',function(v){return money(v);}],['ROAS','roas',function(v){return v==null?'–':v.toFixed(2)+'×';}],['Reach','reach',function(v){return v==null?'–':(v>=1000?(v/1000).toFixed(1)+'k':v);}],['Freq','frequency',function(v){return v==null?'–':v.toFixed(2);}],['Hook','hook',function(v){return v==null?'–':(v*100).toFixed(0)+'%';}],['ATC','atc',function(v){return v==null?'–':v;}],['Value','value',function(v){return kfmt(v);}]];
-  if(!sets.length){ $('a-table').innerHTML='<div class="empty">'+esc(A.note||'Ad-set figures arrive with the morning ad review.')+'</div>'; }
+  if(!sets.length){ $('a-table').innerHTML='<div class="wait" style="font-size:16px;padding:10px 0">Waiting on the daily post from the Meta buyer</div>'; }
   else {
     var rows='', lastMk='';
+    if(A.example) rows+='<tr><td colspan="'+(cols.length+1)+'" style="border:0;padding:0 0 8px"><span class="example">Example</span></td></tr>';
     sets.forEach(function(s){
       var m=s[w]||{};
       if(s.market!==lastMk){ rows+='<tr class="mk"><td colspan="'+(cols.length+1)+'"><span class="eyebrow">'+esc(s.market)+'</span></td></tr>'; lastMk=s.market; }
       rows+='<tr><td class="nm"><i class="dot" style="background:var(--'+(s.funnel==='MOF'?'sophie':s.funnel==='TOM'?'both':'chris')+')"></i>'+esc(s.name)+'<small>'+esc([s.funnel, s.budget? money(s.budget)+'/day':''].filter(Boolean).join(' · '))+'</small></td>'+
         cols.map(function(c){ var tone=(m.tones||{})[c[1]]; return '<td class="num'+(tone?' tone-'+tone:'')+'">'+c[2](m[c[1]])+'</td>'; }).join('')+'</tr>';
     });
-    $('a-table').innerHTML='<table class="adtable"><thead><tr><th>Ad set</th>'+cols.map(function(c){return '<th>'+c[0]+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>'+(A.note?'<div class="faint" style="font-size:12px;margin-top:10px">'+esc(A.note)+'</div>':'');
+    $('a-table').innerHTML='<table class="adtable"><thead><tr><th>Ad set</th>'+cols.map(function(c){return '<th>'+c[0]+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>'+(S.aw==='1'?'':'<div class="faint" style="font-size:12px;margin-top:10px">Reach over several days is the peak day (daily reach does not add up), so Freq is a floor. Attribution 7-day click, 1-day view.</div>')+(A.note?'<div class="faint" style="font-size:12px;margin-top:6px">'+esc(A.note)+'</div>':'')+(A.asAt?'<div class="faint" style="font-size:12px;margin-top:6px">Posted '+esc(String(A.asAt).slice(0,16).replace('T',' '))+'</div>':'');
   }
   var K=A.klaviyo||{};
   $('a-email').innerHTML='<div class="mini"><div><div class="big num">'+(K.sent7d!=null?K.sent7d:'–')+'</div><div class="l">Campaigns sent</div></div><div><div class="big num">'+(K.revenue7d!=null?kfmt(K.revenue7d):'–')+'</div><div class="l">Email revenue</div></div></div>'+
     '<div class="sec"><span class="eyebrow">Coming up</span>'+((K.upcoming||[]).map(function(c){ return '<div class="ci ch-email"><div class="ico">'+CICON.email+'</div><div><div class="tt">'+esc(c.name)+'</div><div class="sub">'+esc(c.when||'no send date')+'</div></div></div>'; }).join('')||'<div class="empty">Nothing scheduled.</div>')+'</div>';
   var G=A.google||{};
-  $('a-google').innerHTML = G.connected? '<div class="mini"><div><div class="big num">'+money(G.spend1)+'</div><div class="l">Today</div></div><div><div class="big num">'+money(G.spend7)+'</div><div class="l">7 days</div></div></div>' : '<div class="empty">Not connected yet. Daily spend lands here once the Google Ads script is in.</div>';
+  $('a-google').innerHTML = G.connected? '<div class="mini"><div><div class="big num">'+money(G.spend1)+'</div><div class="l">Yesterday</div></div><div><div class="big num">'+money(G.spend7)+'</div><div class="l">7 days</div></div></div>' : '<div class="empty">Not connected yet. Daily spend lands here once the Google Ads script is in.</div>';
 }
 
 /* ---------- STL: product ---------- */
