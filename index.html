@@ -800,6 +800,7 @@ var HEALTH_DEFAULTS = {
   sophie: { targets:{veg:5, fruit:2, protein:2.5, strengthDays:2}, injuries:[] }
 };
 var STRENGTH_RX=/strength|weight|functional|gym/i, NON_METRIC={date:1,sleepH:1,steps:1,shift:1};
+function lead(v){ if(v==null||v==='') return null; if(typeof v==='number') return isNaN(v)? null:v; var m=String(v).match(/-?\d+(\.\d+)?/); return m? +m[0]:null; }
 function mean(a){ return a.length? a.reduce(function(s,v){return s+v;},0)/a.length : null; }
 function isNum(v){ return typeof v==='number' && !isNaN(v); }
 function hasMetrics(d){ return Object.keys(d||{}).some(function(k){ return !NON_METRIC[k]; }); }
@@ -840,9 +841,10 @@ function normaliseHealth(raw, who, base){
   dates.forEach(function(s){ var d=byDate[s], wd=d.workout_detail; if(wd && STRENGTH_RX.test(wd.name||'')){ src=src||'watch'; if(s>=monday&&s<=today) sDays[s]=1; } });
   var ci=(D.checkins&&D.checkins[who])||(Array.isArray(raw&&raw.checkins)? raw.checkins:[]);
   var ciWeek=ci.filter(function(r){ return r.date>=monday && r.date<=today; }), nightsCi=ciWeek.filter(function(r){ return r.type==='night'; });
-  if(!src && nightsCi.some(function(r){ return r.strength||r.gym||r.workout; })){ src='checkin'; nightsCi.forEach(function(r){ if(r.strength||r.gym||r.workout) sDays[r.date]=1; }); }
+  function ciStrength(r){ return !!(r.strength||r.gym||r.workout||STRENGTH_RX.test(r.note||'')); }
+  if(!src && nightsCi.some(ciStrength)){ src='checkin'; nightsCi.forEach(function(r){ if(ciStrength(r)) sDays[r.date]=1; }); }
   W.strengthDays=Object.keys(sDays).length; W.strengthSource=src;
-  function pick(r,keys){ for(var i=0;i<keys.length;i++){ var v=r[keys[i]]; if(v!=null && v!=='' && !isNaN(+v)) return +v; } return null; }
+  function pick(r,keys){ for(var i=0;i<keys.length;i++){ var v=lead(r[keys[i]]); if(v!=null) return v; } return null; }
   var dr=nightsCi.map(function(r){ return pick(r,['drinks','standard_drinks','alcohol']); }).filter(isNum);
   W.drinks = dr.length? dr.reduce(function(a,b){return a+b;},0) : null; W.maxDrinkDay = dr.length? Math.max.apply(null,dr) : null;
   W.vegAvg = mean(nightsCi.map(function(r){ return pick(r,['veg','vegetables','veg_serves']); }).filter(isNum));
@@ -855,7 +857,9 @@ function normaliseHealth(raw, who, base){
   var todayRows=ci.filter(function(r){ return r.date===today; }), am=todayRows.filter(function(r){ return r.type==='morning'; })[0];
   if(am){ L.quality=am.quality||am.sleep_quality||(isNum(am.sleep)? am.sleep+' / 5':null); L.rested=am.rested||null; L.phone=am.phone||am.phone_in_bed||null; }
   H.lastNight=L;
-  H.checkins={morning:!!am, night:todayRows.some(function(r){ return r.type==='night'; })};
+  var pm=todayRows.filter(function(r){ return r.type==='night'; })[0];
+  H.checkins={morning:!!am, night:!!pm};
+  H.nightRow=pm||null; H.nightNote=pm&&pm.note? String(pm.note):null; H.kneeToday=pm? lead(pm.knee):null;
   H.nextStrength = H.nextStrength || nextStrengthLabel(who, base);
   H.lastSync = dates.length? dates[dates.length-1] : null;
   /* the chart: the last seven calendar days, shift days from the calendar */
@@ -908,8 +912,10 @@ function renderHealth(){
   var notes=[]; if(H.note) notes.push(H.note);
   $('h-today').innerHTML = '<div class="tl" style="margin-top:0">'+(plan.join('')||'<div class="empty">Nothing planned. A walk counts.</div>')+'</div>'+
     (gymToday&&P&&P.exercises? '<div class="sec"><span class="eyebrow">Programme</span><div class="faint" style="font-size:12.5px;margin-top:4px">'+esc(P.exercises.join(' · '))+'</div></div>':'')+
-    '<div class="sec"><span class="eyebrow">Aches and pains</span>'+(inj.map(function(i){ return '<div class="stat"><span class="l">'+esc(i.name)+'</span><span class="v" style="font-weight:500;color:var(--ink-2)">'+esc(i.status||'')+'</span></div>'; }).join('')||'<div class="empty">Nothing logged. Tap the mic to add one.</div>')+'</div>'+
-    (logs.length?'<div class="sec"><span class="eyebrow">Logged today</span>'+logs.map(function(l){ return '<div class="logline"><b>'+esc(l.t)+'</b> · '+esc(l.text)+'</div>'; }).join('')+'</div>':'')+
+    (function(){ var lines=logs.map(function(l){ return '<div class="logline"><b>'+esc(l.t)+'</b> · '+esc(l.text)+'</div>'; }), nn=H.nightNote, said=logs.map(function(l){ return l.text; }).join(' | ');
+      if(nn && nn!==said && said.indexOf(nn)<0) lines.unshift('<div class="logline"><b>Night check-in</b> · '+esc(nn)+'</div>');
+      return lines.length? '<div class="sec"><span class="eyebrow">Logged today</span>'+lines.join('')+'</div>' : ''; })()+
+    '<div class="sec"><span class="eyebrow">Aches and pains</span>'+(inj.map(function(i){ return '<div class="stat"><span class="l">'+esc(i.name)+'</span><span class="v" style="font-weight:500;color:var(--ink-2)">'+esc(i.status||'')+'</span></div>'; }).join('')+(H.kneeToday!=null? '<div class="stat"><span class="l">Knee today</span><span class="v" style="font-weight:500;color:'+(H.kneeToday>=4?'var(--amber)':'var(--ink-2)')+'">'+H.kneeToday+'/10</span></div>':'')||'<div class="empty">Nothing logged. Tap the mic to add one.</div>')+'</div>'+
     (notes.length?'<div class="faint" style="font-size:12px;margin-top:12px">'+esc(notes.join(' '))+'</div>':'');
   drawHealthChart(H.days||[], who);
 }
@@ -951,7 +957,12 @@ document.addEventListener('click', function(e){
   else if(b.dataset.mic){
     if(b.dataset.mic==='meal-input'){ var inp=$('meal-input'); dictate(b, function(t){ inp.value=t; setMeal(t); }, inp); }
     else if(b.dataset.mic==='add-input'){ var ai=$('add-input'); dictate(b, function(t){ ai.value=t; $('add-form').requestSubmit ? $('add-form').requestSubmit() : $('add-form').dispatchEvent(new Event('submit',{cancelable:true})); }, ai); }
-    else { dictate(b, function(t){ var k='health.log.'+S.who+'.'+ymd(today0()), arr=store(k)||[]; arr.push({t:hm(now()), text:t}); store(k,arr); renderHealth(); api({action:'checkin.night', who:S.who, date:ymd(today0()), note:arr.map(function(l){return l.text;}).join(' | ')}); }); }
+    else { dictate(b, function(t){ var k='health.log.'+S.who+'.'+ymd(today0()), arr=store(k)||[]; arr.push({t:hm(now()), text:t}); store(k,arr); renderHealth();
+      /* the script upserts the whole row, so carry today's phone answers across and keep its note */
+      var ex=((D.checkins&&D.checkins[S.who])||[]).filter(function(r){ return r.date===ymd(today0()) && r.type==='night'; })[0]||{}, body={action:'checkin.night', who:S.who, date:ymd(today0())};
+      Object.keys(ex).forEach(function(key){ if(['date','type','at','note','sleep','stress'].indexOf(key)<0 && ex[key]!=null && ex[key]!=='') body[key]=ex[key]; });
+      var said=arr.map(function(l){return l.text;}).join(' | '); body.note = ex.note && said.indexOf(ex.note)<0 ? ex.note+' | '+said : said;
+      api(body).then(function(r){ if(r) load(false); }); }); }
   }
   else if(b.classList.contains('check')){
     var row=b.closest('.todo'); if(!row||!row.dataset.id) return;
