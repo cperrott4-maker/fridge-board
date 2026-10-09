@@ -298,6 +298,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .ht .second{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .ht .second .v{font-size:17px;font-weight:600}
 .ht .second .v.shift{color:var(--ink-3);font-size:14px}
+.wait{font-family:var(--fs);font-style:italic;font-weight:400;font-size:13.5px;color:var(--ink-3);line-height:1.3;white-space:normal;letter-spacing:0}
+.stat .v .wait{font-size:13.5px;white-space:nowrap}
 .ht .second .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:2px}
 .stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .stat:first-child{border-top:0}
@@ -860,6 +862,7 @@ function normaliseHealth(raw, who, base){
   H.days=[]; for(var i=6;i>=0;i--){ var d=addDays(base,-i), s=ymd(d), r=byDate[s]||{}; H.days.push({date:s, sleepH:sleepHours(r), steps:isNum(r.step_count)? r.step_count:null, shift:shiftOn(who,d)}); }
   return H;
 }
+function wait(t){ return '<span class="wait">'+t+'</span>'; }
 function syncLabel(H, base){
   if(!H.real) return '';
   if(!H.lastSync) return '<span class="syncl stale">No watch data yet</span>';
@@ -877,31 +880,32 @@ function renderHealth(){
       '<div class="second">'+second.map(function(r){ return '<div><div class="v num'+(r[2]?' shift':'')+'">'+r[1]+'</div><div class="l">'+r[0]+'</div></div>'; }).join('')+'</div>';
   }
   var ex = H.example? '<span class="example">Example</span>':syncLabel(H, base);
-  var sl=W.sleepAvg, spread=W.wakeSpread, nN=W.sleepNights;
-  tile('ht-sleep','Sleep', sl!=null? sl.toFixed(1):'–','h', (H.real&&nN!=null? (nN? nN+' of 7 nights on the watch':'no nights on the watch yet')+' · aim 7.5h' : '7-night average · aim 7.5h on the watch'), sl||0, 7.5, sl>=7.5,
-    [['Wake spread', inShift?'Shift':(spread!=null? Math.round(spread*60)+' min':'–'), inShift],['Last night', H.lastNight&&H.lastNight.hours!=null? H.lastNight.hours.toFixed(1)+'h':'–']], ex);
+  var sl=W.sleepAvg, spread=W.wakeSpread, nN=W.sleepNights, noSync=H.real&&!H.lastSync;
+  var sleepCap = !H.real? '7-night average · aim 7.5h on the watch' : nN? nN+' of 7 nights on the watch · aim 7.5h' : noSync? 'Nights land here once the watch is on' : 'Wear the watch tonight, first night lands tomorrow';
+  tile('ht-sleep','Sleep', sl!=null? sl.toFixed(1):'–','h', sleepCap, sl||0, 7.5, sl>=7.5,
+    [['Wake spread', inShift?'Shift':(spread!=null? Math.round(spread*60)+' min':wait('Needs two nights')), inShift],['Last night', H.lastNight&&H.lastNight.hours!=null? H.lastNight.hours.toFixed(1)+'h':wait(noSync?'No watch yet':'Wear it to bed')]], ex);
   var mv=W.aerobicMin||0, dr=(W.rhr!=null&&W.rhrBase!=null)? Math.round(W.rhr-W.rhrBase) : 0;
-  tile('ht-move','Move', mv,' min','aerobic minutes this week · aim 150 to 300', mv, 150, mv>=150,
-    [['Steps, 7-day avg', W.steps7d? Math.round(W.steps7d).toLocaleString():(inShift?'Shift':'–'), !W.steps7d&&inShift],['Resting HR', W.rhr? W.rhr+(W.rhrBase!=null? ' <span style="font-size:13px;color:'+(dr>5?'var(--amber)':'var(--ink-3)')+'">'+(dr>0?'+':'')+dr+'</span>':''):'–']]);
+  tile('ht-move','Move', noSync?'–':mv,' min', noSync? 'Minutes land here once the watch is on · aim 150' : 'aerobic minutes this week · aim 150 to 300', mv, 150, mv>=150,
+    [['Steps, 7-day avg', W.steps7d? Math.round(W.steps7d).toLocaleString():(inShift?'Shift':wait('No steps yet')), !W.steps7d&&inShift],['Resting HR', W.rhr? W.rhr+(W.rhrBase!=null? ' <span style="font-size:13px;color:'+(dr>5?'var(--amber)':'var(--ink-3)')+'">'+(dr>0?'+':'')+dr+'</span>':''):wait('From a watch night')]]);
   var st=W.strengthDays||0, stT=T.strengthDays||2;
-  var vo = W.vo2Trend==='up'?'<span style="color:var(--green)">↑ rising</span>':W.vo2Trend==='down'?'<span style="color:var(--amber)">↓ falling</span>':W.vo2Trend==='first'?'first reading':W.vo2Trend?'→ steady':'–';
-  tile('ht-strength','Strength', st,' day'+(st===1?'':'s'),'this week · aim '+stT+(T.strengthNote?' · '+T.strengthNote:' or more'), st, stT, st>=stT,
-    [['VO₂max trend', vo],['Next session', H.nextStrength||'–']]);
+  var vo = W.vo2Trend==='up'?'<span style="color:var(--green)">↑ rising</span>':W.vo2Trend==='down'?'<span style="color:var(--amber)">↓ falling</span>':W.vo2Trend==='first'?'first reading':W.vo2Trend?'→ steady':wait('From a run or walk');
+  var stCap = (W.strengthSource||!H.real)? 'this week · aim '+stT+(T.strengthNote?' · '+T.strengthNote:' or more') : 'Log a strength workout on the watch · aim '+stT;
+  tile('ht-strength','Strength', st,' day'+(st===1?'':'s'), stCap, st, stT, st>=stT,
+    [['VO₂max trend', vo],['Next session', H.nextStrength||wait('None in calendar')]]);
   var dk=W.drinks, dkOk=dk!=null && dk<=10 && (W.maxDrinkDay||0)<=4;
-  tile('ht-food','Drinks and food', dk!=null? dk:'–',' drink'+(dk===1?'':'s'),'this week · aim 10 or fewer, no day over 4', dk||0, 10, dkOk,
-    [['Veg · fruit a day (aim '+(T.veg||5)+' · '+(T.fruit||2)+')', (W.vegAvg!=null? W.vegAvg.toFixed(1):'–')+' · '+(W.fruitAvg!=null? W.fruitAvg.toFixed(1):'–')],['Biggest day', W.maxDrinkDay!=null? W.maxDrinkDay+' drink'+(W.maxDrinkDay===1?'':'s'):'–']], '<button type="button" class="mic" data-mic="health" aria-label="Log food and drinks by voice">'+MIC+'</button>');
+  tile('ht-food','Drinks and food', dk!=null? dk:'–',' drink'+(dk===1?'':'s'), (dk!=null||!H.real)? 'this week · aim 10 or fewer, no day over 4' : 'From the night check-in · aim 10 or fewer', dk||0, 10, dkOk,
+    [['Veg · fruit a day (aim '+(T.veg||5)+' · '+(T.fruit||2)+')', (W.vegAvg==null&&W.fruitAvg==null)? wait('Night check-in') : (W.vegAvg!=null? W.vegAvg.toFixed(1):'–')+' · '+(W.fruitAvg!=null? W.fruitAvg.toFixed(1):'–')],['Biggest day', W.maxDrinkDay!=null? W.maxDrinkDay+' drink'+(W.maxDrinkDay===1?'':'s'):wait('Needs check-ins')]], '<button type="button" class="mic" data-mic="health" aria-label="Log food and drinks by voice">'+MIC+'</button>');
   var L=H.lastNight||{}, C=H.checkins||{};
   $('h-checkins').innerHTML = (C.morning?'<b>✓ morning</b>':'<i>morning check-in due</i>')+' · '+(C.night?'<b>✓ night</b>':'night at bedtime');
   var old = L.date && L.date!==ymd(base) ? ' <span class="faint">'+DOW[parseDay(L.date).getDay()]+' '+parseDay(L.date).getDate()+' '+MON[parseDay(L.date).getMonth()].slice(0,3)+'</span>' : '';
-  var rows=[['Asleep', L.hours!=null? L.hours.toFixed(1)+'h'+(L.bed&&L.wake? ' <span class="faint">'+L.bed+' to '+L.wake+'</span>':'')+old : '–'],['Quality', L.quality||'–'],['Rested on waking', L.rested||'–'],['Awake overnight', L.awakenings!=null? L.awakenings+' time'+(L.awakenings===1?'':'s'):'–'],['Phone in bed', L.phone||'–']];
+  var am=wait('Morning check-in');
+  var rows=[['Asleep', L.hours!=null? L.hours.toFixed(1)+'h'+(L.bed&&L.wake? ' <span class="faint">'+L.bed+' to '+L.wake+'</span>':'')+old : wait(noSync?'No watch night yet':'Wear the watch to bed')],['Quality', L.quality||am],['Rested on waking', L.rested||am],['Awake overnight', L.awakenings!=null? L.awakenings+' time'+(L.awakenings===1?'':'s'):wait('Needs a watch night')],['Phone in bed', L.phone||am]];
   if(inShift) rows.unshift(['Shift block', 'counted per 24h']);
-  if(H.real && !L.hours) rows.push(['', '<span class="faint" style="font-weight:500">Wear the watch to bed and it fills in here.</span>']);
   $('h-night').innerHTML = rows.map(function(r){ return '<div class="stat"><span class="l">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>'; }).join('');
   var plan=[], gymToday=false; eventsOn(base).forEach(function(x){ if((x.kind==='health'||x.kind==='shift') && (x.who===who||x.who==='both')){ plan.push(evRow(x,null)); if(x.kind==='health'&&STRENGTH_RX.test(x.t)) gymToday=true; } });
   (H.todayPlan||[]).forEach(function(t){ plan.push('<div class="ev who-'+who+'"><div class="tm num">'+esc(t.when||'')+'</div><div><div class="tt"><i class="dot"></i>'+esc(t.title)+'</div>'+(t.sub?'<div class="sub">'+esc(t.sub)+'</div>':'')+'</div></div>'); });
   var inj=H.injuries||[], logs=store('health.log.'+who+'.'+ymd(base))||[], P=H.programme;
-  var notes=[]; if(H.note) notes.push(H.note); if(H.real && !W.strengthSource) notes.push('Strength days come from watch workouts named strength training. None yet.');
-  if(H.real && !(D.checkins&&D.checkins[who]&&D.checkins[who].length)) notes.push('Drinks, veg and fruit come from the night check-in.');
+  var notes=[]; if(H.note) notes.push(H.note);
   $('h-today').innerHTML = '<div class="tl" style="margin-top:0">'+(plan.join('')||'<div class="empty">Nothing planned. A walk counts.</div>')+'</div>'+
     (gymToday&&P&&P.exercises? '<div class="sec"><span class="eyebrow">Programme</span><div class="faint" style="font-size:12.5px;margin-top:4px">'+esc(P.exercises.join(' · '))+'</div></div>':'')+
     '<div class="sec"><span class="eyebrow">Aches and pains</span>'+(inj.map(function(i){ return '<div class="stat"><span class="l">'+esc(i.name)+'</span><span class="v" style="font-weight:500;color:var(--ink-2)">'+esc(i.status||'')+'</span></div>'; }).join('')||'<div class="empty">Nothing logged. Tap the mic to add one.</div>')+'</div>'+
@@ -913,18 +917,19 @@ function drawHealthChart(days, who){
   var box=$('h-chart'); if(!box.clientWidth||!days.length){ box.innerHTML=''; return; }
   var W=box.clientWidth, Hh=box.clientHeight, padL=34, padR=12, padT=18, padB=40, iw=W-padL-padR, ih=Hh-padT-padB, bw=iw/days.length;
   var topH=10, yH=function(v){ return padT+ih-(Math.min(v,topH)/topH)*ih; };
-  var g='', bars='', lab='', any=false;
+  var g='', bars='', lab='', any=false, anySleep=false, SERIF='font-family="New York,Iowan Old Style,Palatino,Georgia,serif" font-style="italic"';
   [5,7.5,10].forEach(function(v){ g+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+yH(v)+'" y2="'+yH(v)+'" stroke="'+(v===7.5?'var(--sky)':'var(--line)')+'"'+(v===7.5?' stroke-width="1.5" stroke-dasharray="2 5"':'')+'/><text x="'+(padL-8)+'" y="'+(yH(v)+4)+'" text-anchor="end" font-size="11" fill="var(--ink-3)" '+FONT+'>'+v+'h</text>'; });
   days.forEach(function(d,i){
     var x=padL+i*bw, dt=parseDay(d.date), cx=x+bw/2, w=Math.min(26,bw*.4);
-    if(d.sleepH!=null){ any=true; var y=yH(d.sleepH), h=Math.max(ih-(y-padT),4);
+    if(d.sleepH!=null){ any=true; anySleep=true; var y=yH(d.sleepH), h=Math.max(ih-(y-padT),4);
       bars+='<rect x="'+(cx-w/2)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(w/2)+'" fill="'+(d.shift?'var(--ink-3)':'var(--'+who+')')+'" opacity="'+(d.shift?.55:.9)+'"><title>'+d.date+' '+d.sleepH+'h</title></rect>';
       bars+='<text x="'+cx+'" y="'+(y-7)+'" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--ink-2)" '+FONT+'>'+d.sleepH.toFixed(1)+'</text>'; }
     else if(d.steps!=null){ any=true; }
     lab+='<text x="'+cx+'" y="'+(Hh-22)+'" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)" '+FONT+'>'+DOW[dt.getDay()]+'</text>';
     lab+='<text x="'+cx+'" y="'+(Hh-7)+'" text-anchor="middle" font-size="11" fill="var(--ink-3)" '+FONT+'>'+(d.shift?'shift'+(d.steps!=null?' · '+(d.steps/1000).toFixed(1)+'k':''):(d.steps!=null? (d.steps/1000).toFixed(1)+'k steps':''))+'</text>';
   });
-  if(!any) g+='<text x="'+(padL+iw/2)+'" y="'+(yH(8.75)+5)+'" text-anchor="middle" font-size="14" fill="var(--ink-3)" '+FONT+'>No watch data yet. Nights and steps land here once the phone starts posting.</text>';
+  if(!any) g+='<text x="'+(padL+iw/2)+'" y="'+(yH(8.75)+5)+'" text-anchor="middle" font-size="15" fill="var(--ink-3)" '+SERIF+'>No watch data yet. Nights and steps land here.</text>';
+  else if(!anySleep) g+='<text x="'+(padL+iw/2)+'" y="'+(yH(8.75)+5)+'" text-anchor="middle" font-size="15" fill="var(--ink-3)" '+SERIF+'>Nights land here once the watch goes to bed.</text>';
   box.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="Hours asleep, last 7 days">'+g+bars+lab+'</svg>';
 }
 
