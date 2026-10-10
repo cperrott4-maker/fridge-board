@@ -311,6 +311,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .chk{font-size:12.5px;color:var(--ink-3)}
 .chk b{color:var(--green);font-weight:600}
 .chk i{color:var(--amber);font-style:normal;font-weight:600}
+.stline{font-size:11.5px;line-height:1.3;color:var(--ink-3);margin-top:auto;padding-top:8px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stline.old{color:var(--amber)}
+.band-d{display:flex;flex-direction:column;min-width:0} .band-d .stline{margin-top:-4px;padding:0 0 6px}
+.cant{font-family:var(--fs);font-style:italic;font-size:15px;color:var(--ink-3);padding:10px 0;line-height:1.35}
+#dim .dim-s{font-size:13px;margin-top:10px;color:#5E6270} #dim .dim-s.old{color:#B8924A}
 .syncl{font-size:11.5px;color:var(--ink-3);white-space:nowrap} .syncl.stale{color:var(--amber);font-weight:600}
 
 /* first-run setup */
@@ -377,7 +382,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
           <div class="greet" id="greet"></div>
           <div class="dow" id="t-dow"></div>
         </div>
-        <div class="dateline"><svg class="daisy" viewBox="0 0 24 24" aria-hidden="true"><g fill="var(--ink)"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="4.5" rx="2.3" ry="4"/><ellipse cx="12" cy="19.5" rx="2.3" ry="4"/><ellipse cx="4.5" cy="12" rx="4" ry="2.3"/><ellipse cx="19.5" cy="12" rx="4" ry="2.3"/><ellipse cx="6.7" cy="6.7" rx="2.3" ry="4" transform="rotate(-45 6.7 6.7)"/><ellipse cx="17.3" cy="17.3" rx="2.3" ry="4" transform="rotate(-45 17.3 17.3)"/><ellipse cx="17.3" cy="6.7" rx="2.3" ry="4" transform="rotate(45 17.3 6.7)"/><ellipse cx="6.7" cy="17.3" rx="2.3" ry="4" transform="rotate(45 6.7 17.3)"/></g></svg><b id="t-date"></b><span id="wx" style="display:flex;align-items:center;gap:6px"></span></div>
+        <div class="band-d"><div class="dateline"><svg class="daisy" viewBox="0 0 24 24" aria-hidden="true"><g fill="var(--ink)"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="4.5" rx="2.3" ry="4"/><ellipse cx="12" cy="19.5" rx="2.3" ry="4"/><ellipse cx="4.5" cy="12" rx="4" ry="2.3"/><ellipse cx="19.5" cy="12" rx="4" ry="2.3"/><ellipse cx="6.7" cy="6.7" rx="2.3" ry="4" transform="rotate(-45 6.7 6.7)"/><ellipse cx="17.3" cy="17.3" rx="2.3" ry="4" transform="rotate(-45 17.3 17.3)"/><ellipse cx="17.3" cy="6.7" rx="2.3" ry="4" transform="rotate(45 17.3 6.7)"/><ellipse cx="6.7" cy="17.3" rx="2.3" ry="4" transform="rotate(45 6.7 17.3)"/></g></svg><b id="t-date"></b><span id="wx" style="display:flex;align-items:center;gap:6px"></span></div><div class="stline" id="st-band" hidden></div></div>
       </div>
       <div class="band-q"><span class="qt" id="quote"></span><span class="qa" id="quote-by"></span></div>
     </section>
@@ -486,7 +491,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
   </main>
 
   <div id="setup" hidden><form class="card" id="setup-form"><h1>Fridge Board</h1><p>One-time setup. Paste the board's address and key from the Google Sheet script. They stay on this iPad.</p><input id="su-api" placeholder="Web app address (ends in /exec)" autocomplete="off" autocapitalize="off" spellcheck="false"><input id="su-key" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="err" id="su-err"></div><button class="btn" type="submit">Connect</button></form></div>
-  <div id="dim" hidden><div class="dim-t num" id="dim-clock"></div><div class="dim-d" id="dim-date"></div><div class="dim-w" id="dim-wx"></div><div class="dim-n" id="dim-next"></div><div class="dim-q"><span class="qtx" id="dim-quote"></span><span class="qb" id="dim-quote-by"></span></div></div>
+  <div id="dim" hidden><div class="dim-t num" id="dim-clock"></div><div class="dim-d" id="dim-date"></div><div class="dim-w" id="dim-wx"></div><div class="dim-s" id="dim-st" hidden></div><div class="dim-n" id="dim-next"></div><div class="dim-q"><span class="qtx" id="dim-quote"></span><span class="qb" id="dim-quote-by"></span></div></div>
 </div>
 
 <script id="fridge-data" type="application/json"></script>
@@ -543,6 +548,7 @@ function showMode(){
   if(S.mode==='stl' && S.tab==='product') renderProduct();
   if(S.mode==='stl' && S.tab==='ads') renderAds();
   if(S.mode==='health') renderHealth();
+  feet();
 }
 
 /* ---------- top bar ---------- */
@@ -552,8 +558,10 @@ function tick(){
   $('clock').textContent = hm(n).replace(/(am|pm)$/,'');
   document.documentElement.classList.toggle('night', n.getHours()>=21 || n.getHours()<6);
   var g = D.generatedAt? new Date(D.generatedAt): null, el=$('sync');
-  if(g){ var mins=Math.max(0,Math.round((n-g)/60000)), stale=mins>180; el.classList.toggle('stale',stale);
-    el.textContent = (stale?'last updated ':'updated ')+(mins<60? mins+' min ago' : (ymd(g)===ymd(n)? hm(g) : DOW[g.getDay()]+' '+hm(g))); }
+  if(g && !isNaN(g)){ var mins=Math.max(0,Math.round((n-g)/60000)), stale=mins>180 || (NET.failed && mins>30), at=ymd(g)===ymd(n)? hm(g) : DOW[g.getDay()]+' '+hm(g);
+    el.classList.toggle('stale', stale||NET.offline);
+    el.title = NET.failed? 'Could not reach the board\u2019s data on the last try' : '';
+    el.textContent = NET.offline? 'Offline, showing '+at : (stale?'last updated ':'updated ')+(mins<60? mins+' min ago' : at); }
   var h=n.getHours(); $('greet').textContent = h<12?'Good morning, it\u2019s':h<17?'Good afternoon, it\u2019s':'Good evening, it\u2019s';
   if(D && isNight(n)!==tick.wasNight){ tick.wasNight=isNight(n); renderWeather(); }
 }
@@ -736,7 +744,7 @@ function typeFor(i){
 function hm12(t){ var m=/^(\d{1,2}):(\d{2})$/.exec(t||''); if(!m) return ''; var h=Number(m[1]), mm=m[2]; return (h%12||12)+(mm==='00'?'':':'+mm)+(h<12?'am':'pm'); }
 /* content to-dos: the Sheet's Todos tab (Board = content) when live, kept on the device in the preview */
 function getCTodos(){ var C=(D.stl&&D.stl.content)||{}; if(live()){ if(!D.contentTodos) D.contentTodos=(C.todos||[]).filter(function(t){ return !t.example; }); return D.contentTodos; } var l=store('ctodos'); if(!l){ l=(C.todos||[]).map(function(t,i){ t=Object.assign({},t); t.id=t.id||'c'+i; return t; }); store('ctodos',l); } return l; }
-function renderContent(){
+function renderCWeek(){
   var C=(D.stl&&D.stl.content)||{items:[],todos:[]}, n=now(), td=today0(), items=C.items||[], MAXD=6;
   var h='';
   for(var k=0;k<7;k++){
@@ -753,10 +761,12 @@ function renderContent(){
   var nodate=items.filter(function(i){ return !i.date && typeFor(i)==='email'; }), parts=[];
   if(nodate.length){ var names=nodate.slice(0,2).map(function(i){ return i.title; }), rest=nodate.length-names.length;
     parts.push('<b style="font-weight:600;color:var(--ink-2)">'+nodate.length+' email draft'+(nodate.length===1?'':'s')+' with no send date</b>: '+esc(names.join(', '))+(rest>0?' and '+rest+' more':'')); }
-  var ks=(D.status&&D.status.klaviyo)||null;
-  if(ks&&ks.error) parts.push('<span style="color:var(--amber)">Klaviyo not reachable</span>: '+esc(String(ks.error).slice(0,90))+(ks.asAt?' (emails as at '+esc(String(ks.asAt).slice(11,16))+')':''));
+  var ki=statusInfo(['klaviyo']);
+  if(ki) parts.push('<span'+(ki.old?' style="color:var(--amber)"':'')+' title="'+esc(ki.raw)+'">'+esc(ki.text)+'</span>');
   if(C.note) parts.push(esc(C.note));
   $('c-note').innerHTML = parts.join('<br>');
+}
+function renderCTodos(){
   var todos=getCTodos().slice(), ORD={both:0,chris:1,sophie:2};
   todos.sort(function(a,b){ return ((a.done?1:0)-(b.done?1:0)) || ((ORD[a.who]||0)-(ORD[b.who]||0)); });
   var open=todos.filter(function(t){return !t.done;}).length;
@@ -769,7 +779,7 @@ function renderContent(){
 }
 
 /* ---------- STL: ads ---------- */
-function renderAds(){
+function renderAdsTable(){
   var A=(D.stl&&D.stl.ads)||{}; setPressed('[data-aw]','data-aw',S.aw);
   var sets=(A.adsets||[]), w='w'+S.aw;
   var cols=[['Spend','spend',function(v){return money(v);}],['Purch.','purchases',function(v){return v==null?'–':v;}],['CPA','cpa',function(v){return money(v);}],['ROAS','roas',function(v){return v==null?'–':v.toFixed(2)+'×';}],['Reach','reach',function(v){return v==null?'–':(v>=1000?(v/1000).toFixed(1)+'k':v);}],['Freq','frequency',function(v){return v==null?'–':v.toFixed(2);}],['Hook','hook',function(v){return v==null?'–':(v*100).toFixed(0)+'%';}],['ATC','atc',function(v){return v==null?'–':v;}],['Value','value',function(v){return kfmt(v);}]];
@@ -785,10 +795,14 @@ function renderAds(){
     });
     $('a-table').innerHTML='<table class="adtable"><thead><tr><th>Ad set</th>'+cols.map(function(c){return '<th>'+c[0]+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>'+(S.aw==='1'?'':'<div class="faint" style="font-size:12px;margin-top:10px">Reach over several days is the peak day (daily reach does not add up), so Freq is a floor. Attribution 7-day click, 1-day view.</div>')+(A.note?'<div class="faint" style="font-size:12px;margin-top:6px">'+esc(A.note)+'</div>':'')+(A.asAt?'<div class="faint" style="font-size:12px;margin-top:6px">Posted '+esc(String(A.asAt).slice(0,16).replace('T',' '))+'</div>':'');
   }
-  var K=A.klaviyo||{};
+}
+function renderAdsEmail(){
+  var A=(D.stl&&D.stl.ads)||{}, K=A.klaviyo||{};
   $('a-email').innerHTML='<div class="mini"><div><div class="big num">'+(K.sent7d!=null?K.sent7d:'–')+'</div><div class="l">Campaigns sent</div></div><div><div class="big num">'+(K.revenue7d!=null?kfmt(K.revenue7d):'–')+'</div><div class="l">Email revenue</div></div></div>'+
     '<div class="sec"><span class="eyebrow">Coming up</span>'+((K.upcoming||[]).map(function(c){ return '<div class="ci ch-email"><div class="ico">'+CICON.email+'</div><div><div class="tt">'+esc(c.name)+'</div><div class="sub">'+esc(c.when||'no send date')+'</div></div></div>'; }).join('')||'<div class="empty">Nothing scheduled.</div>')+'</div>';
-  var G=A.google||{};
+}
+function renderAdsGoogle(){
+  var A=(D.stl&&D.stl.ads)||{}, G=A.google||{};
   $('a-google').innerHTML = G.connected? '<div class="mini"><div><div class="big num">'+money(G.spend1)+'</div><div class="l">Yesterday</div></div><div><div class="big num">'+money(G.spend7)+'</div><div class="l">7 days</div></div></div>' : '<div class="empty">Not connected yet. Daily spend lands here once the Google Ads script is in.</div>';
 }
 
@@ -813,7 +827,7 @@ function classify(){
 }
 function sizesPanel(p){ var S=p.inventory_by_size||{}, keys=Object.keys(S); if(!keys.length) return '';
   return '<div class="sizes" hidden>'+keys.map(function(k){ var n=S[k]; return '<div class="sz'+(n<=0?' out':n<=2?' low':'')+'"><b class="num">'+n+'</b><span>'+esc(k)+'</span></div>'; }).join('')+(p.incoming_units?'<div class="sz coming"><b class="num">+'+p.incoming_units+'</b><span>coming</span></div>':'')+'</div>'; }
-function renderProduct(){
+function renderStock(){
   var c=classify(), cnt={red:0,amber:0,coming:0,green:0}; c.live.forEach(function(x){cnt[x.lvl]++;});
   $('p-summary').innerHTML = [['red','Reorder now'],['amber','Watch'],['coming','Reordered'],['green','Fine']].map(function(z){
     return '<div><b class="num" style="color:var(--'+(z[0]==='coming'?'blue':z[0])+')">'+cnt[z[0]]+'</b><span>'+z[1]+'</span></div>'; }).join('');
@@ -832,6 +846,8 @@ function renderProduct(){
   if(c.soldOut.length) h+='<div class="group-t"><i class="dot" style="background:var(--ink-3)"></i><span class="eyebrow">Sold out, sold well</span></div><div class="soldout">'+c.soldOut.map(function(p){ return esc(p.title)+' <span class="faint">('+p.units_sold_180d+' sold'+(p.incoming_units?', +'+p.incoming_units+' coming':'')+')</span>'; }).join(' · ')+'</div>';
   h+='<div class="faint" style="font-size:12px;margin-top:14px">'+c.quiet+' slow lines hidden. A line missing S, M or L sells under its real demand, so its days left reads long.</div>';
   $('p-list').innerHTML=h;
+}
+function renderIncoming(){
   var I=(D.stl&&D.stl.incoming)||{pos:[]}, ST=['Fabric','Making','Packing','Shipped','Landed'];
   var list=(I.items&&I.items.length)? I.items : (I.pos||[]);
   var ih=list.map(function(po){
@@ -940,22 +956,32 @@ function renderHealth(){
       '<div class="prog'+(ok?' ok':'')+'"><div class="pf" style="width:'+Math.min(100, target? ((val||0)/target)*100:0)+'%"></div></div>'+
       '<div class="second">'+second.map(function(r){ return '<div><div class="v num'+(r[2]?' shift':'')+'">'+r[1]+'</div><div class="l">'+r[0]+'</div></div>'; }).join('')+'</div>';
   }
-  var ex = H.example? '<span class="example">Example</span>':syncLabel(H, base);
-  var sl=W.sleepAvg, spread=W.wakeSpread, nN=W.sleepNights, noSync=H.real&&!H.lastSync;
+  var ex = H.example? '<span class="example">Example</span>':syncLabel(H, base), noSync=H.real&&!H.lastSync;
+  function part(ids, f){ try{ f(); }catch(e){ failed('health', ids, e); } }
+  part(['ht-sleep'], function(){
+  var sl=W.sleepAvg, spread=W.wakeSpread, nN=W.sleepNights;
   var sleepCap = !H.real? '7-night average · aim 7.5h on the watch' : nN? nN+' of 7 nights on the watch · aim 7.5h' : noSync? 'Nights land here once the watch is on' : 'Wear the watch tonight, first night lands tomorrow';
   tile('ht-sleep','Sleep', sl!=null? sl.toFixed(1):'–','h', sleepCap, sl||0, 7.5, sl>=7.5,
     [['Wake spread', inShift?'Shift':(spread!=null? Math.round(spread*60)+' min':wait('Needs two nights')), inShift],['Last night', H.lastNight&&H.lastNight.hours!=null? H.lastNight.hours.toFixed(1)+'h':wait(noSync?'No watch yet':'Wear it to bed')]], ex);
+  });
+  part(['ht-move'], function(){
   var mv=W.aerobicMin||0, dr=(W.rhr!=null&&W.rhrBase!=null)? Math.round(W.rhr-W.rhrBase) : 0;
   tile('ht-move','Move', noSync?'–':mv,' min', noSync? 'Minutes land here once the watch is on · aim 150' : 'aerobic minutes this week · aim 150 to 300', mv, 150, mv>=150,
     [['Steps, 7-day avg', W.steps7d? Math.round(W.steps7d).toLocaleString():(inShift?'Shift':wait('No steps yet')), !W.steps7d&&inShift],['Resting HR', W.rhr? W.rhr+(W.rhrBase!=null? ' <span style="font-size:13px;color:'+(dr>5?'var(--amber)':'var(--ink-3)')+'">'+(dr>0?'+':'')+dr+'</span>':''):wait('From a watch night')]]);
+  });
+  part(['ht-strength'], function(){
   var st=W.strengthDays||0, stT=T.strengthDays||2;
   var vo = W.vo2Trend==='up'?'<span style="color:var(--green)">↑ rising</span>':W.vo2Trend==='down'?'<span style="color:var(--amber)">↓ falling</span>':W.vo2Trend==='first'?'first reading':W.vo2Trend?'→ steady':wait('From a run or walk');
   var stCap = (W.strengthSource||!H.real)? 'this week · aim '+stT+(T.strengthNote?' · '+T.strengthNote:' or more') : 'Log a strength workout on the watch · aim '+stT;
   tile('ht-strength','Strength', st,' day'+(st===1?'':'s'), stCap, st, stT, st>=stT,
     [['VO₂max trend', vo],['Next session', H.nextStrength||wait('None in calendar')]]);
+  });
+  part(['ht-food'], function(){
   var dk=W.drinks, dkOk=dk!=null && dk<=10 && (W.maxDrinkDay||0)<=4;
   tile('ht-food','Drinks and food', dk!=null? dk:'–',' drink'+(dk===1?'':'s'), (dk!=null||!H.real)? 'this week · aim 10 or fewer, no day over 4' : 'From the night check-in · aim 10 or fewer', dk||0, 10, dkOk,
     [['Veg · fruit a day (aim '+(T.veg||5)+' · '+(T.fruit||2)+')', (W.vegAvg==null&&W.fruitAvg==null)? wait('Night check-in') : (W.vegAvg!=null? W.vegAvg.toFixed(1):'–')+' · '+(W.fruitAvg!=null? W.fruitAvg.toFixed(1):'–')],['Biggest day', W.maxDrinkDay!=null? W.maxDrinkDay+' drink'+(W.maxDrinkDay===1?'':'s'):wait('Needs check-ins')]], '<button type="button" class="mic" data-mic="health" aria-label="Log food and drinks by voice">'+MIC+'</button>');
+  });
+  part(['h-night'], function(){
   var L=H.lastNight||{}, C=H.checkins||{};
   $('h-checkins').innerHTML = (C.morning?'<b>✓ morning</b>':'<i>morning check-in due</i>')+' · '+(C.night?'<b>✓ night</b>':'night at bedtime');
   var old = L.date && L.date!==ymd(base) ? ' <span class="faint">'+DOW[parseDay(L.date).getDay()]+' '+parseDay(L.date).getDate()+' '+MON[parseDay(L.date).getMonth()].slice(0,3)+'</span>' : '';
@@ -963,6 +989,8 @@ function renderHealth(){
   var rows=[['Asleep', L.hours!=null? L.hours.toFixed(1)+'h'+(L.bed&&L.wake? ' <span class="faint">'+L.bed+' to '+L.wake+'</span>':'')+old : wait(noSync?'No watch night yet':'Wear the watch to bed')],['Quality', L.quality||am],['Rested on waking', L.rested||am],['Awake overnight', L.awakenings!=null? L.awakenings+' time'+(L.awakenings===1?'':'s'):wait('Needs a watch night')],['Phone in bed', L.phone||am]];
   if(inShift) rows.unshift(['Shift block', 'counted per 24h']);
   $('h-night').innerHTML = rows.map(function(r){ return '<div class="stat"><span class="l">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>'; }).join('');
+  });
+  part(['h-today'], function(){
   var plan=[], gymToday=false; eventsOn(base).forEach(function(x){ if((x.kind==='health'||x.kind==='shift') && (x.who===who||x.who==='both')){ plan.push(evRow(x,null)); if(x.kind==='health'&&STRENGTH_RX.test(x.t)) gymToday=true; } });
   (H.todayPlan||[]).forEach(function(t){ plan.push('<div class="ev who-'+who+'"><div class="tm num">'+esc(t.when||'')+'</div><div><div class="tt"><i class="dot"></i>'+esc(t.title)+'</div>'+(t.sub?'<div class="sub">'+esc(t.sub)+'</div>':'')+'</div></div>'); });
   var inj=H.injuries||[], logs=store('health.log.'+who+'.'+ymd(base))||[], P=H.programme;
@@ -974,7 +1002,8 @@ function renderHealth(){
       return lines.length? '<div class="sec"><span class="eyebrow">Logged today</span>'+lines.join('')+'</div>' : ''; })()+
     '<div class="sec"><span class="eyebrow">Aches and pains</span>'+(inj.map(function(i){ return '<div class="stat"><span class="l">'+esc(i.name)+'</span><span class="v" style="font-weight:500;color:var(--ink-2)">'+esc(i.status||'')+'</span></div>'; }).join('')+(H.kneeToday!=null? '<div class="stat"><span class="l">Knee today</span><span class="v" style="font-weight:500;color:'+(H.kneeToday>=4?'var(--amber)':'var(--ink-2)')+'">'+H.kneeToday+'/10</span></div>':'')||'<div class="empty">Nothing logged. Tap the mic to add one.</div>')+'</div>'+
     (notes.length?'<div class="faint" style="font-size:12px;margin-top:12px">'+esc(notes.join(' '))+'</div>':'');
-  drawHealthChart(H.days||[], who);
+  });
+  part(['h-chart'], function(){ drawHealthChart(H.days||[], who); });
 }
 function drawHealthChart(days, who){
   var box=$('h-chart'); if(!box.clientWidth||!days.length){ box.innerHTML=''; return; }
@@ -995,6 +1024,58 @@ function drawHealthChart(days, who){
   else if(!anySleep) g+='<text x="'+(padL+iw/2)+'" y="'+(yH(8.75)+5)+'" text-anchor="middle" font-size="15" fill="var(--ink-3)" '+SERIF+'>Nights land here once the watch goes to bed.</text>';
   box.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="Hours asleep, last 7 days">'+g+bars+lab+'</svg>';
 }
+
+/* ---------- robustness: quiet status lines, never a blank card ---------- */
+/* status.<section>.error or .stale -> one line at the foot of each card that reads it; the raw text (it can hold URLs) only in the title */
+var SRC_NAME={calendar:'Calendar',weather:'Weather',lists:'Lists',sales:'Sales',adspend:'Ad spend',stock:'Stock',incoming:'Production',klaviyo:'Klaviyo',health:'Watch data',checkins:'Check-ins'};
+var FEET=[['hcal',['calendar']],['h-today',['calendar']],['l-items',['lists']],
+  ['k-rev',['sales']],['k-mer',['sales','adspend']],['k-roas',['adspend']],['k-spend',['adspend']],['chart',['sales','adspend']],
+  ['a-email',['klaviyo']],['p-list',['stock']],['p-incoming',['incoming']],['h-chart',['health']],['h-night',['checkins']]];
+function whenLabel(g){ var n=now(); return ymd(g)===ymd(n)? hm(g) : (n-g)<6*864e5? DOW[g.getDay()]+' '+hm(g) : g.getDate()+' '+MON[g.getMonth()].slice(0,3); }
+function statusInfo(srcs){
+  var st=(D&&D.status)||{}, bad=srcs.filter(function(s){ var x=st[s]; return x && (x.error || x.stale===true); });
+  if(!bad.length) return null;
+  var oldest=null; bad.forEach(function(s){ var a=st[s].asAt? new Date(st[s].asAt) : null; if(a && !isNaN(a) && (!oldest || a<oldest)) oldest=a; });
+  var names=bad.map(function(s,i){ var nm=SRC_NAME[s]||s; return i? nm.charAt(0).toLowerCase()+nm.slice(1) : nm; });
+  return { text: names.join(' and ')+(oldest? ' not updated since '+whenLabel(oldest) : ' not updated yet'),
+    old: !oldest || (now()-oldest) > 6*3600e3,
+    raw: bad.map(function(s){ return (SRC_NAME[s]||s)+': '+(st[s].error? String(st[s].error) : 'stale'); }).join('\n') };
+}
+function setLine(el, srcs, base){ if(!el) return; var i=statusInfo(srcs); el.hidden=!i; el.className=base+(i&&i.old?' old':''); el.textContent=i? i.text:''; el.title=i? i.raw:''; }
+function feet(){
+  FEET.forEach(function(f){ var e=$(f[0]), c=e && (e.classList.contains('card')? e : e.closest('.card')); if(!c) return;
+    var ln=c.querySelector(':scope > .stline'); if(!ln){ ln=document.createElement('div'); c.appendChild(ln); } else if(ln!==c.lastElementChild) c.appendChild(ln);
+    setLine(ln, f[1], 'stline'); });
+  setLine($('st-band'), ['weather'], 'stline'); setLine($('dim-st'), ['weather'], 'dim-s');
+}
+/* a render that throws shows one serif line in its own card(s) and leaves every other card alone */
+var CANT='<div class="cant">Couldn\u2019t show this right now</div>';
+var TILE_LABEL={'k-rev':'Revenue','k-mer':'MER','k-roas':'Meta ROAS','k-spend':'Ad spend','ht-sleep':'Sleep','ht-move':'Move','ht-strength':'Strength','ht-food':'Drinks and food'};
+function failed(name, ids, e, clear){
+  try{ console.error('Fridge Board: '+name+' could not render', e); }catch(x){}
+  ids.forEach(function(id){ var el=$(id); if(el) el.innerHTML=(TILE_LABEL[id]? '<span class="eyebrow">'+TILE_LABEL[id]+'</span>' : '')+CANT; });
+  (clear||[]).forEach(function(id){ var el=$(id); if(el) el.innerHTML=''; });
+}
+function guard(name, ids, fn, clear){ return function(){ try{ return fn.apply(this, arguments); }catch(e){ failed(name, ids, e, clear); } }; }
+renderHomeCal = guard('calendar', ['hcal'], renderHomeCal);
+renderLists = guard('lists', ['l-items'], renderLists);
+renderNumbers = guard('numbers', ['k-rev','k-mer','k-roas','k-spend'], renderNumbers);
+drawChart = guard('chart', ['chart'], drawChart);
+renderCWeek = guard('content week', ['c-week'], renderCWeek, ['c-note']);
+renderCTodos = guard('content to-dos', ['c-todo'], renderCTodos);
+function renderContent(){ renderCWeek(); renderCTodos(); }
+renderAdsTable = guard('ad sets', ['a-table'], renderAdsTable);
+renderAdsEmail = guard('email', ['a-email'], renderAdsEmail);
+renderAdsGoogle = guard('google ads', ['a-google'], renderAdsGoogle);
+function renderAds(){ renderAdsTable(); renderAdsEmail(); renderAdsGoogle(); }
+renderStock = guard('stock', ['p-list'], renderStock, ['p-summary']);
+renderIncoming = guard('incoming', ['p-incoming'], renderIncoming);
+function renderProduct(){ renderStock(); renderIncoming(); }
+renderHealth = guard('health', ['ht-sleep','ht-move','ht-strength','ht-food','h-night','h-today','h-chart'], renderHealth);
+renderWeather = guard('weather', ['wx'], renderWeather);
+renderToday = guard('today', [], renderToday);
+prepEvents = guard('events', [], prepEvents);
+tick = guard('tick', [], tick);
 
 /* ---------- wiring ---------- */
 function render(){ if(!D) return; prepEvents(); renderWeather(); tick(); renderToday(); renderSoon(); renderLists(); renderNumbers(); renderContent(); showMode(); }
@@ -1074,19 +1155,29 @@ function poke(){ clearTimeout(idle); $('dim').hidden=true; idle=setTimeout(showD
 setInterval(function(){ if(!$('dim').hidden) dimTick(); }, 20000);
 window.addEventListener('resize', function(){ if(S.mode==='stl'&&S.tab==='numbers') drawChart(); if(S.mode==='health') renderHealth(); });
 setInterval(tick, 20000);
-setInterval(function(){ renderToday(); renderSoon(); }, 300000);
+setInterval(function(){ renderToday(); renderSoon(); feet(); }, 300000);
 try{ if(navigator.wakeLock){ var req=function(){ navigator.wakeLock.request('screen').catch(function(){}); }; req(); document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') req(); }); } }catch(e){}
 
 /* data: inline snapshot (preview), else the Sheet script named in ?api=&key= or saved on this device, else a local data.json */
 function cfg(){ try{ var q=new URLSearchParams(location.search); if(q.get('api')&&q.get('key')){ var c={api:cleanApi(q.get('api')), key:q.get('key').replace(/[^A-Za-z0-9]/g,'')}; store('cfg',c); history.replaceState(null,'',location.pathname); return c; } return store('cfg'); }catch(e){ return null; } }
 function dataUrl(){ var c=cfg(); return c? c.api+(c.api.indexOf('?')>-1?'&':'?')+'key='+encodeURIComponent(c.key) : 'data.json'; }
-function load(first){
+/* every good load is kept on the iPad; a failed load keeps what is on screen, or the kept copy, and says so in the top bar */
+var NET={failed:false, offline:false}, LASTGOOD='fridge.lastgood';
+function saveGood(d){ try{ var s=JSON.stringify(d); if(s.length>2e6) return; localStorage.setItem(LASTGOOD, s); }catch(e){} }
+function readGood(){ try{ var s=localStorage.getItem(LASTGOOD), d=s? JSON.parse(s) : null; return d && typeof d==='object' && !d.error ? d : null; }catch(e){ return null; } }
+function load(first, fromSetup){
   return fetch(dataUrl(),{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(function(d){ if(d&&d.error) throw new Error(d.error); D=d; $('setup').hidden=true; render(); })
-    .catch(function(e){ if(first){ $('setup').hidden=false; var c=cfg(); if(c){ $('su-api').value=c.api; $('su-err').textContent='Could not reach the board\u2019s data ('+e.message+'). Check the address and key.'; } } });
+    .then(function(d){ if(!d || typeof d!=='object') throw new Error('empty reply'); if(d.error) throw new Error(d.error); return d; })
+    .then(function(d){ D=d; NET.failed=false; NET.offline=false; $('setup').hidden=true; saveGood(d); try{ render(); }catch(e){ console.error('Fridge Board: render failed', e); } },
+      function(e){
+        try{ console.warn('Fridge Board: data fetch failed', e); }catch(x){}
+        NET.failed=true;
+        if(!D && !fromSetup){ var g=readGood(); if(g){ D=g; NET.offline=true; $('setup').hidden=true; try{ render(); }catch(x){ console.error('Fridge Board: render failed', x); } return; } }
+        if(D && $('setup').hidden){ tick(); return; }
+        if(first){ $('setup').hidden=false; var c=cfg(); if(c){ $('su-api').value=c.api; $('su-err').textContent='Could not reach the board\u2019s data ('+e.message+'). Check the address and key.'; } } });
 }
 function cleanApi(v){ v=String(v||'').trim(); var m=v.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/); if(m) return m[0]; try{ var u=new URL(v); var q=u.searchParams.get('q')||u.searchParams.get('url'); if(q) return cleanApi(decodeURIComponent(q)); }catch(x){} return v.split('?')[0]; }
-$('setup-form').addEventListener('submit', function(e){ e.preventDefault(); var api=cleanApi($('su-api').value), key=$('su-key').value.trim().replace(/[^A-Za-z0-9]/g,''); $('su-api').value=api; if(!api||!key){ $('su-err').textContent='Both boxes are needed.'; return; } store('cfg',{api:api,key:key}); $('su-err').textContent='Connecting\u2026'; load(true); });
+$('setup-form').addEventListener('submit', function(e){ e.preventDefault(); var api=cleanApi($('su-api').value), key=$('su-key').value.trim().replace(/[^A-Za-z0-9]/g,''); $('su-api').value=api; if(!api||!key){ $('su-err').textContent='Both boxes are needed.'; return; } store('cfg',{api:api,key:key}); $('su-err').textContent='Connecting\u2026'; load(true, true); });
 if(D) render();
 else { load(true); setInterval(function(){ load(false); }, 600000); }
 })();
