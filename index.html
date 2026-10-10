@@ -119,9 +119,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .hhd.wknd .dh span{color:var(--ink-3)}
 .hhd.is-today .dh span{color:var(--ink)}
 .hhd.is-today .dh b{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--card);font-size:18px;display:grid;place-items:center}
-.hhd .wxd{display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink-3);font-weight:500;padding:4px 2px 0;min-height:16px}
-.hhd .wxd .wxi{width:15px;height:15px;vertical-align:0}
-.hhd.is-today .wxd{color:var(--ink-2)}
+.hhd .wxd{display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink-2);font-weight:500;padding:4px 2px 0;min-height:16px}
+.hhd .wxd .wxi{width:16px;height:16px;vertical-align:0;stroke-width:1.8}
+.hhd.is-today .wxd{color:var(--ink)}
 .hlane{grid-row:2;grid-column:1 / -1;display:grid;grid-template-columns:var(--cols);column-gap:6px;row-gap:3px;padding:4px 0 6px}
 .hlane:empty{display:none}
 .hbar{font-size:12px;font-weight:600;line-height:1.2;padding:7px 10px;border-radius:8px;background:var(--c);color:var(--card);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -324,11 +324,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 #dim{position:fixed;inset:0;background:#15171E;color:#8A8D99;display:grid;place-content:center;text-align:center;z-index:50;cursor:pointer}
 #dim .dim-t{font-size:min(20vw,170px);font-weight:500;letter-spacing:-.03em;color:#D8D2C3;line-height:1}
 #dim .dim-d{font-family:var(--fs);font-style:italic;font-size:24px;margin-top:10px;color:#A09A8C}
-#dim .dim-w{font-size:18px;margin-top:16px;color:#9DBBD6;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:8px}
+#dim .dim-w{font-size:19px;margin-top:16px;color:#A9C5DD;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:9px}
+#dim .dim-w .wxi{width:24px;height:24px}
 #dim .dim-n{font-size:16px;margin-top:22px;color:#5E6270}
-#dim .dim-q{position:absolute;left:0;right:0;bottom:50px;padding:0 14vw;font-family:var(--fs);font-style:italic;font-size:21px;line-height:1.45;color:#8E8A7E}
+#dim .dim-q{position:absolute;left:0;right:0;bottom:50px;padding:0 14vw;font-family:var(--fs);font-style:italic;font-size:22px;line-height:1.45;color:#A49E90}
 #dim .dim-q .qtx:before{content:"\201C"} #dim .dim-q .qtx:after{content:"\201D"}
-#dim .dim-q .qb{display:block;margin-top:10px;font-family:var(--f);font-style:normal;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#4F525E}
+#dim .dim-q .qb{display:block;margin-top:10px;font-family:var(--f);font-style:normal;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#6A6E7C}
 .wxi{width:20px;height:20px;flex:none;vertical-align:-4px}
 
 @media (prefers-reduced-motion: reduce){ .bar .fillb{animation:none} *{transition:none!important} }
@@ -540,22 +541,36 @@ function tick(){
   $('clock').textContent = hm(n).replace(/(am|pm)$/,'');
   document.documentElement.classList.toggle('night', n.getHours()>=21 || n.getHours()<6);
   var g = D.generatedAt? new Date(D.generatedAt): null, el=$('sync');
-  if(g){ var mins=Math.round((n-g)/60000), stale=mins>180; el.classList.toggle('stale',stale);
+  if(g){ var mins=Math.max(0,Math.round((n-g)/60000)), stale=mins>180; el.classList.toggle('stale',stale);
     el.textContent = (stale?'last updated ':'updated ')+(mins<60? mins+' min ago' : (ymd(g)===ymd(n)? hm(g) : DOW[g.getDay()]+' '+hm(g))); }
   var h=n.getHours(); $('greet').textContent = h<12?'Good morning, it\u2019s':h<17?'Good afternoon, it\u2019s':'Good evening, it\u2019s';
+  if(D && isNight(n)!==tick.wasNight){ tick.wasNight=isNight(n); renderWeather(); }
 }
-function wxIcon(code){ var c=+code, S='<svg class="wxi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">';
+function wxIcon(code, night){ var c=+code, S='<svg class="wxi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">';
+  var moon='<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>';
+  var fog='<path d="M7 15.5h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 9.1 3.3 3.3 0 0 0 7 15.5z"/><path d="M5 19h11M8 22h8"/>';
+  var snow='<path d="M7 15.5h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 9.1 3.3 3.3 0 0 0 7 15.5z"/><path d="M8.5 19v.01M12 20.5v.01M15.5 19v.01M10.2 22v.01M13.8 22v.01" stroke-width="2.2"/>';
   var sun='<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>';
   var cloud='<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 12.1 3.3 3.3 0 0 0 7 18.5z"/>';
   var partly='<circle cx="8" cy="8" r="3"/><path d="M8 2.5v1.5M2.5 8H4M4.1 4.1l1 1"/><path d="M10 20h8a3.5 3.5 0 0 0 .5-6.96A5 5 0 0 0 9 13.6 2.8 2.8 0 0 0 10 20z"/>';
   var rain=cloud.replace('18.5','15.5').replace('18.5z','15.5z')+'<path d="M9 18.5v2.5M13 18.5v2.5M17 18.5v2.5"/>';
-  var body = c===0||c===1? sun : c===2? partly : (c>=51&&c<=67)||(c>=80&&c<=82)? rain : c>=95? cloud+'<path d="M12 13l-2 4h4l-2 4"/>' : cloud;
+  var body = c===0||c===1? (night? moon : sun) : c===2? partly : c===45||c===48? fog : (c>=71&&c<=77)||c===85||c===86? snow
+    : (c>=51&&c<=67)||(c>=80&&c<=82)? rain : c>=95? cloud+'<path d="M12 13l-2 4h4l-2 4"/>' : cloud;
   return S+body+'</svg>'; }
-function wxText(w){ return Math.round(w.current.temperature_2m)+'° and '+(WMO[w.current.weather_code]||'')+(w.daily? ', high '+Math.round(w.daily.temperature_2m_max[0])+'°':''); }
-function wxDay(ds){ var w=D.weather, dl=w&&w.daily, i=(dl&&dl.time)? dl.time.indexOf(ds) : -1; if(i<0) return '<div class="wxd"></div>'; return '<div class="wxd">'+wxIcon(dl.weather_code[i])+'<span class="num">'+Math.round(dl.temperature_2m_max[i])+'°</span></div>'; }
+function isNight(d){ var h=(d||now()).getHours(); return h>=21 || h<6; }
+function numOk(v){ return v!=null && isFinite(+v); }
+/* "19° and mostly clear, high 22°"; the high only when it differs from now by 2° or more, nothing invented when a number is missing */
+function wxText(w){ var c=w&&w.current||{}, t=numOk(c.temperature_2m)? Math.round(c.temperature_2m) : null, words=WMO[c.weather_code]||'',
+    hi=w&&w.daily&&w.daily.temperature_2m_max&&numOk(w.daily.temperature_2m_max[0])? Math.round(w.daily.temperature_2m_max[0]) : null, parts=[];
+  if(t!=null) parts.push(t+'°'+(words? ' and '+words:'')); else if(words) parts.push(words);
+  if(hi!=null && (t==null || Math.abs(hi-t)>=2)) parts.push('high '+hi+'°');
+  return parts.join(', '); }
+function wxDay(ds){ var w=D.weather, dl=w&&w.daily, i=(dl&&dl.time)? dl.time.indexOf(ds) : -1; if(i<0) return '<div class="wxd"></div>';
+  var mx=dl.temperature_2m_max&&dl.temperature_2m_max[i];
+  return '<div class="wxd">'+wxIcon(dl.weather_code&&dl.weather_code[i])+(numOk(mx)? '<span class="num">'+Math.round(mx)+'°</span>':'')+'</div>'; }
 function renderWeather(){
-  var w=D.weather; if(!w||!w.current) return;
-  $('wx').innerHTML = '<span>·</span>'+wxIcon(w.current.weather_code)+'<span>'+wxText(w)+'</span>';
+  var w=D.weather, t=w&&w.current? wxText(w) : '';
+  $('wx').innerHTML = t? '<span>·</span>'+wxIcon(w.current.weather_code, isNight())+'<span>'+t+'</span>' : '';
 }
 
 /* ---------- HOME ---------- */
@@ -1002,7 +1017,7 @@ var idle, DIM_MS=120000;
 function dimTick(){ var n=now(), td=today0(); $('dim-clock').textContent=hm(n).replace(/(am|pm)$/,''); $('dim-date').textContent=DOWL[n.getDay()]+' '+n.getDate()+' '+MON[n.getMonth()];
   var nx=eventsOn(td).filter(function(x){return !x.span && x.s>n;})[0], tmr=false; if(!nx){ nx=eventsOn(addDays(td,1)).filter(function(x){return !x.span;})[0]; tmr=true; }
   $('dim-next').textContent = nx? 'Next: '+nx.t+' · '+(tmr?'tomorrow ':'')+hm(nx.s) : '';
-  var w=D.weather; $('dim-wx').innerHTML = (w&&w.current)? wxIcon(w.current.weather_code)+'<span>'+wxText(w)+'</span>' : ''; }
+  var w=D.weather, wt=w&&w.current? wxText(w) : ''; $('dim-wx').innerHTML = wt? wxIcon(w.current.weather_code, isNight(n))+'<span>'+wt+'</span>' : ''; }
 function showDim(){ dimTick(); $('dim').hidden=false; S.mode='home'; S.hv='week'; S.hoff=0; renderHomeCal(); showMode(); }
 function poke(){ clearTimeout(idle); $('dim').hidden=true; idle=setTimeout(showDim, DIM_MS); }
 ['touchstart','mousedown','keydown'].forEach(function(t){ document.addEventListener(t, poke, {passive:true}); }); poke();
