@@ -342,6 +342,29 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 #dim .dim-q .qb{display:block;margin-top:10px;font-family:var(--f);font-style:normal;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#80848F}
 .wxi{width:20px;height:20px;flex:none;vertical-align:-4px}
 
+/* PHONE (600px and under): the same board laid out for one hand. Tabs move to a bar at the bottom,
+   the week reads down the screen as a list, the quote and clock step aside (the phone has its own clock). */
+.agenda{display:flex;flex-direction:column;gap:6px}
+.aday{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:14px;background:var(--card-2)}
+.aday.wknd{background:var(--card-3)}
+.aday.is-today{background:var(--sky-t)}
+.adh{display:flex;flex-direction:column;gap:2px;padding-top:1px}
+.adh span{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.adh b{font-size:22px;font-weight:600;line-height:1}
+.aday.is-today .adh span{color:var(--ink)}
+.aday.is-today .adh b{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--card);font-size:16px;display:grid;place-items:center;margin-left:-3px}
+.adh .wxd{display:flex;align-items:center;gap:3px;font-size:11.5px;color:var(--ink-2);padding-top:3px}
+.adh .wxd .wxi{width:14px;height:14px;stroke-width:1.8}
+.aitems{display:flex;flex-direction:column;gap:4px;min-width:0;justify-content:center}
+.aev{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:9px;background:var(--ct);border-left:2.5px solid var(--c);font-size:14.5px;line-height:1.3}
+.aev .at{font-size:12px;font-weight:600;color:var(--cx,var(--c));white-space:nowrap}
+.aev .ax{font-weight:500;overflow-wrap:anywhere}
+.aev.shift{background:transparent;border-left:0;box-shadow:inset 0 0 0 1.5px var(--c)}
+.aev.span{background:var(--cx,var(--c));color:var(--card);border-left:0}
+.aev.span .at{color:var(--card);opacity:.85}
+.aev.past{opacity:.45}
+.aday .free{font-family:var(--fs);font-style:italic;color:var(--ink-3);font-size:14px;align-self:center}
+.aday.is-today .free{color:var(--choc);font-size:16px}
 @media (prefers-reduced-motion: reduce){ .bar .fillb{animation:none} *{transition:none!important} }
 @media (max-width: 820px){
   body{overflow:auto} .app{height:auto}
@@ -352,6 +375,71 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
   .chartp{min-height:260px} .top{flex-wrap:wrap} .dow{font-size:44px}
   .cweek{grid-template-columns:repeat(7,minmax(70px,1fr));overflow-x:auto}
   .adwrap{overflow-x:auto}
+}
+@media (max-width: 600px){
+  .app{padding:calc(10px + env(safe-area-inset-top)) 12px calc(96px + env(safe-area-inset-bottom));gap:12px;grid-template-columns:minmax(0,1fr);width:100%;overflow-x:hidden}
+  .view{gap:12px}
+  #home,#stl-content,#stl-product,#stl-ads{grid-template-columns:minmax(0,1fr)}
+  .sync{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;text-align:right}
+  .card{padding:16px 14px 14px;border-radius:18px}
+  .top{min-height:0;gap:8px}
+  .top:has(> .seg:not([hidden]):not([aria-label="Mode"])) {min-height:40px}
+  .clock{display:none}
+  .top .seg:not([aria-label="Mode"]){max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .seg[aria-label="Mode"]{position:fixed;z-index:40;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;padding:4px;border-radius:16px;
+    background:var(--card);border:1px solid var(--line);box-shadow:0 6px 24px rgba(20,22,30,.18)}
+  .seg[aria-label="Mode"] button{flex:1;min-height:46px;font-size:14px;padding:0 6px}
+  .seg[aria-label="Mode"] button[aria-pressed="true"]{background:var(--fill);box-shadow:none}
+  /* home */
+  .band{padding:14px 16px;gap:4px;flex-direction:column;align-items:stretch}
+  .band-l{flex-direction:column;align-items:flex-start;gap:4px}
+  .band-s{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .greet{font-size:17px}
+  .dow{font-size:32px}
+  .dateline{font-size:15px;padding-bottom:0;flex-wrap:wrap;white-space:normal;row-gap:2px}
+  .band-q{display:none}
+  .hcard .ch{flex-wrap:wrap;margin-bottom:10px}
+  .hnav{flex:1;min-width:0}
+  .icon-btn{width:40px;height:40px}
+  .cal-title{font-size:16px;padding:0 4px}
+  .hcard .seg button{min-height:34px;padding:6px 12px}
+  .hmonth{grid-auto-rows:minmax(54px,auto)}
+  .hmc{padding:4px 4px 3px}
+  .hml span{display:none} .hml{gap:2px} .hml .dot{width:6px;height:6px}
+  .hmc{flex-direction:row;flex-wrap:wrap;align-content:flex-start;gap:3px}
+  .hmc .md{flex-basis:100%;margin:0}
+  .hml.faint{display:none}
+  .dinner{flex-wrap:wrap;gap:6px 10px}
+  .dinner input{flex-basis:0}
+  #l-items{max-height:none}
+  .add{flex-wrap:wrap}
+  .add input{flex-basis:calc(100% - 52px)}
+  .add .pick{margin-left:auto}
+  /* say the label */
+  #stl-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi .big{font-size:32px;margin-top:6px} .kpi .big small{font-size:16px}
+  .kpi .rows{grid-template-columns:1fr;gap:8px;margin-top:12px}
+  .kpi .rows .v{font-size:15px}
+  .chartp{min-height:240px}
+  .cweek{grid-template-columns:1fr;overflow:visible}
+  .cday{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;padding:10px}
+  .cday .dh{flex-direction:column;gap:0;padding:0}
+  .srow{grid-template-columns:42px minmax(0,1fr) 54px;gap:6px 12px}
+  .srow > div:nth-child(3){grid-column:2 / 4;grid-row:2}
+  .srow .cover{grid-column:3;grid-row:1}
+  .sizes{padding-left:0}
+  .sum{flex-wrap:wrap} .sum div{flex:1 1 40%}
+  .sum b{font-size:22px}
+  /* health */
+  #health{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #health .card:not(.ht){grid-column:1 / -1!important}
+  .ht .big{font-size:30px} .ht .big small{font-size:14px}
+  .ht .second{grid-template-columns:1fr}
+  #h-chart{min-height:220px}
+  .adtable{font-size:13px}
+  #setup .card{width:100%}
+  .ht .ch{flex-wrap:wrap;row-gap:2px}
+  .top:has(#stl-tabs:not([hidden])) .sync{display:none}
 }
 </style>
 
@@ -493,7 +581,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
     <section class="card" style="grid-column:span 2"><div class="ch"><span class="eyebrow">Last 7 days</span><div class="legend"><span><i class="sw" id="h-sw"></i>Hours asleep</span><span class="faint">steps under each day</span></div></div><div class="chart" id="h-chart"></div></section>
   </main>
 
-  <div id="setup" hidden><form class="card" id="setup-form"><h1>Fridge Board</h1><p>One-time setup. Paste the board's address and key from the Google Sheet script. They stay on this iPad.</p><input id="su-api" placeholder="Web app address (ends in /exec)" autocomplete="off" autocapitalize="off" spellcheck="false"><input id="su-key" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="err" id="su-err"></div><button class="btn" type="submit">Connect</button></form></div>
+  <div id="setup" hidden><form class="card" id="setup-form"><h1>Fridge Board</h1><p>One-time setup. Paste the board's address and key from the Google Sheet script. They stay on this device.</p><input id="su-api" placeholder="Web app address (ends in /exec)" autocomplete="off" autocapitalize="off" spellcheck="false"><input id="su-key" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="err" id="su-err"></div><button class="btn" type="submit">Connect</button></form></div>
   <div id="dim" hidden><div class="dim-t num" id="dim-clock"></div><div class="dim-d" id="dim-date"></div><div class="dim-w" id="dim-wx"></div><div class="dim-s" id="dim-st" hidden></div><div class="dim-n" id="dim-next"></div><div class="dim-q"><span class="qtx" id="dim-quote"></span><span class="qb" id="dim-quote-by"></span></div></div>
 </div>
 
@@ -617,11 +705,28 @@ function setQuote(td){
   $('dim-quote').textContent=q.text; $('dim-quote-by').textContent=q.by||'Unknown';
 }
 function day0(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+var PHONE = window.matchMedia('(max-width: 600px)');
+/* phone week: the same seven days as a list down the screen, every event shown, multi-day items as solid all-day rows */
+function renderAgenda(n, td, box){
+  var start=addDays(td, 7*S.hoff), end=addDays(start,6);
+  $('hc-title').textContent = start.getMonth()===end.getMonth()? start.getDate()+' to '+end.getDate()+' '+MON[start.getMonth()].slice(0,3) : start.getDate()+' '+MON[start.getMonth()].slice(0,3)+' to '+end.getDate()+' '+MON[end.getMonth()].slice(0,3);
+  var h='<div class="agenda">';
+  for(var i=0;i<7;i++){
+    var d=addDays(start,i), ds=ymd(d), isT=ds===ymd(td), wk=d.getDay()===0||d.getDay()===6, all=eventsOn(d);
+    var spans=all.filter(function(x){ return x.span; }), evs=all.filter(function(x){ return !x.span; });
+    h+='<div class="aday'+(isT?' is-today':'')+(wk?' wknd':'')+'"><div class="adh"><span>'+DOW[d.getDay()]+'</span><b class="num">'+d.getDate()+'</b>'+wxDay(ds)+'</div><div class="aitems">'+
+      spans.map(function(x){ return '<div class="aev span who-'+x.who+'"><span class="at">All day</span><span class="ax">'+esc(x.t)+'</span></div>'; }).join('')+
+      evs.map(function(x){ return '<div class="aev who-'+x.who+(x.kind==='shift'?' shift':'')+(isT&&x.e<n?' past':'')+'"><span class="at num">'+hm(x.s)+'</span><span class="ax">'+esc(x.t)+'</span></div>'; }).join('')+
+      (all.length?'':'<div class="free">'+(isT?'Nothing on. Enjoy it.':'free')+'</div>')+'</div></div>';
+  }
+  box.innerHTML=h+'</div>';
+}
 /* the Home calendar: a 7-day week from today (or a month), inside the card */
 function renderHomeCal(){
   var n=now(), td=today0(), box=$('hcal');
   setPressed('[data-hv]','data-hv',S.hv);
-  if(S.hv==='week'){
+  if(S.hv==='week' && PHONE.matches){ renderAgenda(n, td, box); }
+  else if(S.hv==='week'){
     var start=addDays(td, 7*S.hoff), end=addDays(start,6), endX=addDays(start,7);
     $('hc-title').textContent = start.getMonth()===end.getMonth()? start.getDate()+' to '+end.getDate()+' '+MON[start.getMonth()] : start.getDate()+' '+MON[start.getMonth()].slice(0,3)+' to '+end.getDate()+' '+MON[end.getMonth()].slice(0,3);
     var head='', lane='<div class="hlane">', days='', tbg='';
@@ -1151,13 +1256,14 @@ function dimTick(){ var n=now(), td=today0(); $('dim-clock').textContent=hm(n).r
   $('dim-next').textContent = nx? 'Next: '+nx.t+' · '+(tmr?'tomorrow ':'')+hm(nx.s) : '';
   var w=D.weather, wt=w&&w.current? wxText(w) : ''; $('dim-wx').innerHTML = wt? wxIcon(w.current.weather_code, isNight(n))+'<span>'+wt+'</span>' : ''; }
 function showDim(){ dimTick(); $('dim').hidden=false; S.mode='home'; S.hv='week'; S.hoff=0; renderHomeCal(); showMode(); }
-function poke(){ clearTimeout(idle); $('dim').hidden=true; idle=setTimeout(showDim, DIM_MS); }
+function poke(){ clearTimeout(idle); $('dim').hidden=true; if(!PHONE.matches) idle=setTimeout(showDim, DIM_MS); } /* a phone sleeps on its own, so it never dims to the clock */
 ['touchstart','mousedown','keydown'].forEach(function(t){ document.addEventListener(t, poke, {passive:true}); }); poke();
 setInterval(function(){ if(!$('dim').hidden) dimTick(); }, 20000);
 window.addEventListener('resize', function(){ if(S.mode==='stl'&&S.tab==='numbers') drawChart(); if(S.mode==='health') renderHealth(); });
 setInterval(tick, 20000);
 setInterval(function(){ renderToday(); renderHomeCal(); feet(); }, 300000);
-try{ if(navigator.wakeLock){ var req=function(){ navigator.wakeLock.request('screen').catch(function(){}); }; req(); document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') req(); }); } }catch(e){}
+try{ PHONE.addEventListener('change', function(){ renderHomeCal(); poke(); }); }catch(e){}
+try{ if(navigator.wakeLock && !PHONE.matches){ var req=function(){ navigator.wakeLock.request('screen').catch(function(){}); }; req(); document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') req(); }); } }catch(e){}
 
 /* data: inline snapshot (preview), else the Sheet script named in ?api=&key= or saved on this device, else a local data.json */
 function cfg(){ try{ var q=new URLSearchParams(location.search); if(q.get('api')&&q.get('key')){ var c={api:cleanApi(q.get('api')), key:q.get('key').replace(/[^A-Za-z0-9]/g,'')}; store('cfg',c); history.replaceState(null,'',location.pathname); return c; } return store('cfg'); }catch(e){ return null; } }
