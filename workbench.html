@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STL Workbench</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Workbench">
+<meta name="robots" content="noindex">
+<style>
+/* The STL workbench: Chris's desk page. Same palette, type and cards as the Fridge Board (app/index.html), so the
+   two read as one system: ivory paper, navy ink, terracotta / sage / sand, Avenir Next, a serif italic for the warm line.
+   Built for a laptop first (three columns), folds to one column on a phone. All data comes from the Fridge Board
+   script's ?view=workbench; this page holds none. */
+:root{
+  --paper:#F2ECDF; --card:#FBF8F1; --card-2:#F5EEDB; --card-3:#ECE2C8;
+  --ink:#383845; --ink-2:#5C5F6C; --ink-3:#676A79; --line:rgba(56,56,69,.09); --fill:rgba(56,56,69,.055);
+  --chris:#6F8FB3; --sophie:#C98B7A; --both:#B39B64; --chris-t:#E6EDF4; --sophie-t:#F7E8E2; --both-t:#F3E8CB;
+  --chris-x:#486789; --sophie-x:#98513E; --both-x:#746239;
+  --red:#A84A38; --amber:#846324; --green:#4C7150; --blue:#4C6C90;
+  --red-t:#F3E2DC; --amber-t:#F5E9C9; --green-t:#E3ECE0;
+  --red-f:#B9513E; --amber-f:#C9973A; --green-f:#5D8A62; --blue-f:#6F8FB3;
+  --choc:#6B4A3A; --choc-t:#EFE3DB;
+  --f:"Avenir Next","Avenir",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --fs:"New York","Iowan Old Style","Palatino",Georgia,"Times New Roman",serif;
+  --r:20px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1C1F28; --card:#252936; --card-2:#2C3140; --card-3:#333848; --ink:#F2ECDF; --ink-2:#B2B4BE; --ink-3:#9B9FAB;
+    --line:rgba(242,236,223,.09); --fill:rgba(242,236,223,.07);
+    --chris:#8FABCC; --sophie:#D9A090; --both:#C8B07A; --chris-t:#2C3647; --sophie-t:#44332F; --both-t:#3E3828;
+    --chris-x:#8FABCC; --sophie-x:#D9A090; --both-x:#C8B07A;
+    --red:#E2897A; --amber:#D9AC55; --green:#86AD8B; --blue:#8FABCC; --red-t:#43302C; --amber-t:#43392A; --green-t:#2C3A2F;
+    --red-f:#E2897A; --amber-f:#D9AC55; --green-f:#86AD8B; --blue-f:#8FABCC; --choc:#C9A48F; --choc-t:#3E322C; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1C1F28; --card:#252936; --card-2:#2C3140; --card-3:#333848; --ink:#F2ECDF; --ink-2:#B2B4BE; --ink-3:#9B9FAB;
+  --line:rgba(242,236,223,.09); --fill:rgba(242,236,223,.07);
+  --chris:#8FABCC; --sophie:#D9A090; --both:#C8B07A; --chris-t:#2C3647; --sophie-t:#44332F; --both-t:#3E3828;
+  --chris-x:#8FABCC; --sophie-x:#D9A090; --both-x:#C8B07A;
+  --red:#E2897A; --amber:#D9AC55; --green:#86AD8B; --blue:#8FABCC; --red-t:#43302C; --amber-t:#43392A; --green-t:#2C3A2F;
+  --red-f:#E2897A; --amber-f:#D9AC55; --green-f:#86AD8B; --blue-f:#8FABCC; --choc:#C9A48F; --choc-t:#3E322C; color-scheme:dark;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.4;font-weight:500;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1500px;margin:0 auto;padding:18px 24px 40px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.greet{font-family:var(--fs);font-style:italic;font-size:22px;color:var(--choc);font-weight:400}
+.tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sync{font-size:12.5px;color:var(--ink-3)}
+.sync.warn{color:var(--amber)}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:7px 13px;border-radius:10px;background:var(--fill);font-size:13px;font-weight:600;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--card-3)}
+.btn.busy{opacity:.6;pointer-events:none}
+
+/* money strip */
+.money{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:14px;margin-bottom:16px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px 14px;min-width:0}
+.tile .l{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-size:30px;font-weight:600;letter-spacing:-.01em;margin-top:6px;line-height:1.05}
+.tile .v small{font-size:16px;font-weight:600;color:var(--ink-2);margin-left:4px}
+.tile .s{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.tile.zone-g{background:var(--green-t)} .tile.zone-y{background:var(--amber-t)} .tile.zone-r{background:var(--red-t)}
+.tile.zone-g .v{color:var(--green)} .tile.zone-y .v{color:var(--amber)} .tile.zone-r .v{color:var(--red)}
+.wait{font-family:var(--fs);font-style:italic;font-weight:400;font-size:17px;color:var(--ink-3)}
+.chart svg{display:block;width:100%;height:78px;margin-top:8px}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink-2);margin-top:4px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* columns */
+.cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 12px;min-width:0}
+.card h2{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.count{min-width:24px;height:24px;padding:0 7px;border-radius:12px;display:inline-grid;place-items:center;font-size:13px;letter-spacing:0;background:var(--ink);color:var(--card)}
+.count.zero{background:var(--fill);color:var(--ink-3)}
+.sub{margin:16px 0 8px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.empty{font-family:var(--fs);font-style:italic;color:var(--ink-3);font-size:15px;padding:6px 0 10px;font-weight:400}
+.foot{font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);margin-top:12px;padding-top:9px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.foot .bad{color:var(--red)} .foot .amb{color:var(--amber)}
+.note{font-size:12.5px;color:var(--ink-2);background:var(--card-2);border-radius:12px;padding:10px 12px;margin:2px 0 10px}
+
+/* reply rows */
+.mrow{padding:11px 0 12px;border-top:1px solid var(--line)}
+.mrow:first-of-type{border-top:0;padding-top:2px}
+.mhead{display:flex;align-items:baseline;gap:8px;min-width:0}
+.mbox{flex:none;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--chris-t);color:var(--chris-x)}
+.mbox.info{background:var(--sophie-t);color:var(--sophie-x)} .mbox.returns{background:var(--both-t);color:var(--both-x)}
+.mname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mage{margin-left:auto;flex:none;font-size:12.5px;color:var(--ink-3)}
+.mage.old{color:var(--amber);font-weight:600}
+.msub{font-size:14px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mprev{font-size:13px;color:var(--ink-2);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.macts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.act{display:inline-flex;align-items:center;min-height:30px;padding:4px 10px;border-radius:8px;background:var(--fill);font-size:12.5px;font-weight:600;color:var(--ink-2);text-decoration:none}
+.act:hover{background:var(--card-3)}
+.act.go{background:var(--ink);color:var(--card)}
+.act.draft{background:var(--green-t);color:var(--green)}
+.act.quiet{background:none;color:var(--ink-3)}
+.cc .mrow{padding:8px 0}
+.cc .msub{font-size:13px;color:var(--ink-2)}
+details summary{cursor:pointer;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary .chev{display:inline-block;transition:transform .15s}
+details[open] summary .chev{transform:rotate(90deg)}
+
+/* orders */
+.sold{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.sitem{min-width:0}
+.sitem .ph{position:relative;aspect-ratio:3/4;border-radius:12px;background:var(--card-2) center/cover no-repeat;overflow:hidden}
+.sitem .ph b{position:absolute;right:6px;top:6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--ink);color:var(--card);font-size:13px;display:grid;place-items:center}
+.sitem .ph .ini{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--fs);font-style:italic;color:var(--ink-3);font-size:20px}
+.sitem .t{font-size:12px;margin-top:5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sitem .z{font-size:11px;color:var(--ink-3);margin-top:1px}
+.orow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);text-decoration:none;min-width:0}
+.orow:first-of-type{border-top:0}
+.orow .on{font-weight:600;flex:none;width:76px}
+.orow .od{flex:1;min-width:0;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .ov{flex:none;font-size:13px}
+.orow .tag{flex:none;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:6px;background:var(--fill);color:var(--ink-2)}
+.orow .tag.us{background:var(--chris-t);color:var(--chris-x)}
+.orow .tag.new{background:var(--green-t);color:var(--green)}
+.orow .tag.exc{background:var(--both-t);color:var(--both-x)}
+.stuck{background:var(--red-t);border-radius:14px;padding:6px 12px;margin-bottom:4px}
+.stuck .orow{border-color:rgba(168,74,56,.15)}
+.stuck .age{color:var(--red);font-weight:600;font-size:13px;flex:none}
+.refund{color:var(--red)}
+
+/* jobs */
+.jrow{padding:9px 0;border-top:1px solid var(--line)}
+.jrow:first-of-type{border-top:0;padding-top:2px}
+.jhead{display:flex;align-items:baseline;gap:8px}
+.biz{flex:none;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:6px;background:var(--fill);color:var(--ink-2)}
+.biz.stl{background:var(--sophie-t);color:var(--sophie-x)} .biz.peggy{background:var(--green-t);color:var(--green)} .biz.personal{background:var(--chris-t);color:var(--chris-x)} .biz.os{background:var(--both-t);color:var(--both-x)}
+.jt{font-size:14px;line-height:1.3;min-width:0}
+.jn{font-size:12.5px;color:var(--ink-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jmeta{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--ink-3)}
+.copy{font-size:12px;font-weight:600;color:var(--ink-3);padding:2px 6px;border-radius:6px;background:var(--fill)}
+.copy.ok{color:var(--green);background:var(--green-t)}
+
+/* setup */
+#setup{max-width:520px;margin:12vh auto 0;padding:0 16px}
+#setup .card{padding:26px}
+#setup h1{margin:0 0 6px;font-size:22px}
+#setup p{color:var(--ink-2);margin:0 0 16px}
+#setup input{display:block;width:100%;min-height:44px;margin:0 0 10px;padding:10px 13px;border-radius:12px;border:0;background:var(--fill);font:inherit;color:var(--ink)}
+#setup .err{color:var(--red);font-size:13px;min-height:18px}
+
+@media (max-width:1180px){
+  .money{grid-template-columns:repeat(4,minmax(0,1fr))} .money .chart{grid-column:1/-1}
+  .cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .cols .c-mail{grid-column:1/-1}
+}
+@media (max-width:720px){
+  .wrap{padding:14px 16px 32px}
+  .money{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .tile{padding:13px 14px 12px} .tile .v{font-size:24px}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .greet{font-size:19px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="brand"><h1>Say The Label · Workbench</h1><span class="greet" id="greet"></span></div>
+    <div class="tools">
+      <span class="sync" id="sync"></span>
+      <button class="btn" id="refresh" type="button" title="Ask the script to re-read mail, orders and jobs now (about 20 seconds)">Refresh now</button>
+      <a class="btn" href="./" title="The kitchen board">Fridge</a>
+    </div>
+  </header>
+
+  <section class="money" id="money" aria-label="Money"></section>
+
+  <main class="cols">
+    <section class="card c-mail" aria-labelledby="h-mail"><h2 id="h-mail">Needs a reply <span class="count" id="n-mail">0</span></h2><div id="mail"></div><div class="foot" id="f-mail"></div></section>
+    <section class="card c-orders" aria-labelledby="h-orders"><h2 id="h-orders">Orders <span class="count" id="n-orders">0</span></h2><div id="orders"></div><div class="foot" id="f-orders"></div></section>
+    <section class="card c-jobs" aria-labelledby="h-jobs">
+      <h2 id="h-jobs">My jobs <span class="count" id="n-jobs">0</span></h2><div id="jobs"></div><div class="foot" id="f-jobs"></div></section>
+  </main>
+</div>
+
+<div id="setup" hidden><form class="card" id="setup-form">
+  <h1>STL Workbench</h1>
+  <p>One-time setup on this device. Paste the Fridge Board script's address and key (1Password, "Fridge Board"). If the Fridge Board already works in this browser, this step is skipped.</p>
+  <input id="su-api" placeholder="Web app address (ends in /exec)" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <input id="su-key" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button class="btn" type="submit">Connect</button>
+  <div class="err" id="su-err"></div>
+</form></div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var D = null, LAST_OK = 0, FAIL = '';
+var MER_GREEN = 35, MER_RED = 50;              // the dashboard's zones (README: green <35, yellow 35-50, red >50, Meta-only)
+var ADMIN = 'https://c83a48.myshopify.com/admin/orders/';
+var GOOD = 'workbench.lastgood';
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function store(k,v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function cfg(){ var c=store('fridge.cfg'); return c && c.api && c.key ? c : null; }   // shared with the Fridge Board on the same site
+function money(n, dp){ if(n==null || isNaN(n)) return '–'; return '$'+Number(n).toLocaleString('en-AU',{minimumFractionDigits:dp||0,maximumFractionDigits:dp||0}); }
+function ago(iso){
+  if(!iso) return 'never';
+  var m = Math.max(0, Math.round((Date.now()-Date.parse(iso))/60000));
+  if(m < 1) return 'just now'; if(m < 60) return m+' min ago';
+  var h = Math.round(m/60); if(h < 36) return h+' h ago';
+  return Math.round(h/24)+' days ago';
+}
+function age(iso){
+  var m = Math.max(0, Math.round((Date.now()-Date.parse(iso))/60000));
+  if(m < 60) return m+'m'; var h=Math.floor(m/60); if(h < 24) return h+'h'; return Math.floor(h/24)+'d';
+}
+function clock(iso){ var d=new Date(iso); return d.toLocaleString('en-AU',{weekday:'short',hour:'numeric',minute:'2-digit'}); }
+function boxName(m){ var b=String(m||'').split('@')[0]; return b==='chris'?'chris':b; }
+function initials(t){ return String(t||'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0];}).join(''); }
+function statusLine(name, label){
+  var s = D && D.status && D.status[name]; if(!s) return '<span class="amb">'+esc(label)+': no status</span>';
+  if(s.error && !s.asAt) return '<span class="bad" title="'+esc(s.error)+'">'+esc(plainError(s.error))+'</span>';
+  var bits = '<span'+(s.stale?' class="amb"':'')+'>'+esc(label)+' updated '+esc(ago(s.asAt))+'</span>';
+  if(s.error) bits += '<span class="bad" title="'+esc(s.error)+'">Last refresh failed: '+esc(plainError(s.error))+'</span>';
+  else if(s.warning) bits += '<span class="amb" title="'+esc(s.warning)+'">'+esc(plainWarning(s.warning))+'</span>';
+  return bits;
+}
+function plainError(e){
+  e = String(e||'');
+  if(/not connected yet/i.test(e)) return 'Outlook not connected yet (one-off setup, SETUP-WORKBENCH.md step 3)';
+  if(/AADSTS|invalid_grant|Microsoft token/i.test(e)) return 'Outlook sign-in expired: run connectOutlook in the script once';
+  if(/never refreshed/i.test(e)) return 'Not run yet: needs the script re-paste';
+  if(/no workbench-jobs\.json/i.test(e)) return 'No jobs file in Drive yet (written at the next Claude session)';
+  return e.slice(0,140);
+}
+function plainWarning(w){
+  w = String(w||'');
+  var m = w.match(/([a-z]+)@saythelabel\.com\.au: Graph 403/);
+  if(m) return m[1]+'@ could not be opened (chris@ needs access to it)';
+  return w.slice(0,120);
+}
+function zone(mer){ return mer==null ? '' : mer < MER_GREEN ? 'zone-g' : mer <= MER_RED ? 'zone-y' : 'zone-r'; }
+function safe(name, fn){ try{ fn(); }catch(e){ console.error('Workbench: '+name+' failed', e); var el=$(name); if(el) el.innerHTML='<div class="empty">Couldn’t show this right now.</div>'; } }
+
+/* ---------- money ---------- */
+function renderMoney(){
+  var m = D.money || {}, t = m.today || {}, w3 = m.w3 || {}, w7 = m.w7 || {};
+  var h = '';
+  h += '<div class="tile"><div class="l">Today so far</div><div class="v num">'+(t.revenue==null?'<span class="wait">waiting</span>':money(t.revenue))+'</div><div class="s">'+(t.orders==null?'Shopify not read yet':t.orders+(t.orders===1?' order':' orders'))+'</div></div>';
+  h += '<div class="tile"><div class="l">Revenue, 3 days</div><div class="v num">'+money(w3.revenue)+'</div><div class="s">'+(w3.orders||0)+' orders · 7 days '+money(w7.revenue)+'</div></div>';
+  h += '<div class="tile"><div class="l">Meta spend, 3 days</div><div class="v num">'+(w3.meta==null?'<span class="wait">waiting on Meta</span>':money(w3.meta))+'</div><div class="s">'+(w7.meta==null?'7 days: waiting on Meta':'7 days '+money(w7.meta))+'</div></div>';
+  h += '<div class="tile '+zone(w3.mer)+'"><div class="l">MER, 3 days</div><div class="v num">'+(w3.mer==null?'<span class="wait">waiting on Meta</span>':w3.mer+'<small>%</small>')+'</div><div class="s">'+(w7.mer==null?'Green under 35, red over 50':'7 days '+w7.mer+'%')+'</div></div>';
+  h += '<div class="tile chart"><div class="l">Last 14 days</div>'+trendSvg(m.trend||[])+'<div class="legend"><span><i style="background:var(--sophie)"></i>Revenue</span><span><i style="background:var(--chris)"></i>Meta spend</span></div></div>';
+  $('money').innerHTML = h;
+}
+function trendSvg(rows){
+  if(!rows.length) return '<div class="empty">No sales history yet.</div>';
+  var W=560, H=78, pad=2, n=rows.length, bw=(W-pad*2)/n, max=1;
+  rows.forEach(function(r){ max=Math.max(max, r.revenue||0, r.meta||0); });
+  var s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Revenue and Meta spend by day">';
+  rows.forEach(function(r,i){
+    var x=pad+i*bw, rh=(r.revenue||0)/max*(H-6), mh=(r.meta||0)/max*(H-6);
+    s+='<rect x="'+(x+bw*0.12).toFixed(1)+'" y="'+(H-rh).toFixed(1)+'" width="'+(bw*0.4).toFixed(1)+'" height="'+rh.toFixed(1)+'" rx="2" fill="var(--sophie)"><title>'+esc(r.date)+' revenue '+money(r.revenue)+'</title></rect>';
+    if(r.meta!=null) s+='<rect x="'+(x+bw*0.52).toFixed(1)+'" y="'+(H-mh).toFixed(1)+'" width="'+(bw*0.36).toFixed(1)+'" height="'+mh.toFixed(1)+'" rx="2" fill="var(--chris)"><title>'+esc(r.date)+' Meta '+money(r.meta)+'</title></rect>';
+  });
+  return s+'</svg>';
+}
+
+/* ---------- needs a reply ---------- */
+function claudeLink(t){
+  var who = /^(info|returns)@/.test(t.mailbox) ? 'Sophie’s house style for '+t.mailbox.split('@')[0]+'@ (Lola on returns@)' : 'my voice';
+  var q = 'Draft a reply for me to check before anything is sent. Reply in the same thread, '+who+', no em-dashes.\n\n'+
+          'Mailbox: '+t.mailbox+'\nFrom: '+t.name+' <'+t.address+'>\nSubject: '+t.subject+'\nTheir latest message (preview): "'+t.preview+'"';
+  return 'https://claude.ai/new?q='+encodeURIComponent(q);
+}
+function mailRow(t, compact){
+  var old = (Date.now()-Date.parse(t.at)) > 24*3600000;
+  var h = '<div class="mrow" data-key="'+esc(t.key)+'"><div class="mhead"><span class="mbox '+esc(boxName(t.mailbox))+'">'+esc(boxName(t.mailbox))+'</span>'+
+    '<span class="mname" title="'+esc(t.address)+'">'+esc(t.name)+'</span><span class="mage num'+(old?' old':'')+'" title="'+esc(clock(t.at))+'">'+esc(age(t.at))+'</span></div>'+
+    '<div class="msub">'+esc(t.subject)+(t.count>1?' <span class="sync">('+t.count+')</span>':'')+'</div>';
+  if(!compact) h += '<div class="mprev">'+esc(t.preview)+'</div>';
+  h += '<div class="macts">';
+  if(t.webLink) h += '<a class="act go" href="'+esc(t.webLink)+'" target="_blank" rel="noopener">Open in Outlook</a>';
+  if(t.draft) h += '<a class="act draft" href="'+esc(t.draft.webLink)+'" target="_blank" rel="noopener" title="A draft in '+esc(t.draft.mailbox)+' Drafts, saved '+esc(clock(t.draft.at))+'">Draft ready</a>';
+  else if(!compact) h += '<a class="act" href="'+esc(claudeLink(t))+'" target="_blank" rel="noopener" title="Opens a new Claude chat with this email filled in">Ask Claude to draft</a>';
+  h += '<button class="act quiet" type="button" data-dismiss="'+esc(t.key)+'" data-subject="'+esc(t.subject)+'">No reply needed</button></div></div>';
+  return h;
+}
+function renderMail(){
+  var r = D.replies || {}, toMe = r.toMe || [], cc = r.cc || [], st = (D.status||{}).mail || {};
+  $('n-mail').textContent = toMe.length; $('n-mail').className = 'count'+(toMe.length?'':' zero');
+  var h = '';
+  if(st.error && !st.asAt) h += '<div class="note">'+esc(plainError(st.error))+'. Orders, jobs and money below work without it.</div>';
+  else if(!toMe.length) h += '<div class="empty">Nothing waiting on you in the last '+(r.windowHours||48)+' hours.</div>';
+  toMe.forEach(function(t){ h += mailRow(t, false); });
+  if(cc.length) h += '<details class="cc"><summary class="sub"><span><span class="chev">›</span> CC’d, someone else may answer ('+cc.length+')</span></summary>'+cc.map(function(t){ return mailRow(t, true); }).join('')+'</details>';
+  $('mail').innerHTML = h;
+  var boxes = (r.mailboxes||[]).map(function(b){ return b.split('@')[0]+'@'; }).join(', ');
+  $('f-mail').innerHTML = statusLine('mail','Mail')+(boxes?'<span>'+esc(boxes)+(r.dismissed?' · '+r.dismissed+' hidden':'')+'</span>':'');
+}
+
+/* ---------- orders ---------- */
+function renderOrders(){
+  var o = D.orders, st = (D.status||{}).orders || {};
+  if(!o){ $('n-orders').textContent='0'; $('orders').innerHTML='<div class="note">'+esc(plainError(st.error||'never refreshed'))+'</div>'; $('f-orders').innerHTML=statusLine('orders','Orders'); return; }
+  var real = (o.recent||[]).filter(function(x){ return !x.exchange && !x.cancelled; });
+  $('n-orders').textContent = real.length; $('n-orders').className='count'+(real.length?'':' zero');
+  var h = '';
+  if((o.stuck||[]).length){
+    h += '<div class="sub"><span>Unfulfilled over '+o.stuckDays+' days ('+o.stuck.length+')</span></div><div class="stuck">';
+    o.stuck.forEach(function(x){ h += orderRow(x, true); });
+    h += '</div>';
+  }
+  if((o.sold||[]).length){
+    h += '<div class="sub"><span>What sold, last '+o.recentDays+' days</span><span>'+o.last24h+' in 24 h</span></div><div class="sold">';
+    o.sold.forEach(function(s){
+      var sizes = Object.keys(s.sizes).filter(Boolean).map(function(z){ return s.sizes[z]>1? z+'×'+s.sizes[z] : z; }).join(' ');
+      var title = String(s.title).replace(/\s+-\s+/,' · ');
+      h += '<div class="sitem"><div class="ph"'+(s.image?' style="background-image:url(\''+esc(s.image)+'&width=300\')"':'')+'>'+(s.image?'':'<span class="ini">'+esc(initials(s.title))+'</span>')+'<b class="num">'+s.qty+'</b></div><div class="t">'+esc(title)+'</div><div class="z">'+esc(sizes)+'</div></div>';
+    });
+    h += '</div>';
+  } else h += '<div class="empty">No orders in the last '+o.recentDays+' days.</div>';
+  if((o.refunds||[]).length){
+    h += '<div class="sub"><span>Refunds</span></div>';
+    o.refunds.forEach(function(r){ h += '<div class="orow"><span class="on">'+esc(r.name)+'</span><span class="od">'+esc(clock(r.at))+'</span><span class="ov num refund">−'+money(r.amount,2)+'</span></div>'; });
+  }
+  if((o.recent||[]).length){
+    h += '<details><summary class="sub"><span><span class="chev">›</span> Every order, last '+o.recentDays+' days ('+o.recent.length+')</span></summary>';
+    o.recent.forEach(function(x){ h += orderRow(x, false); });
+    h += '</details>';
+  }
+  $('orders').innerHTML = h;
+  $('f-orders').innerHTML = statusLine('orders','Orders');
+}
+function orderRow(x, stuck){
+  var items = x.items.map(function(li){ return li.title.replace(/\s+-\s+/,' ')+(li.size?' '+li.size:'')+(li.qty>1?' ×'+li.qty:''); }).join(', ');
+  var where = x.country && x.country!=='AU' ? x.country : x.region;
+  var tag = x.exchange ? '<span class="tag exc">exchange</span>' : x.cancelled ? '<span class="tag">cancelled</span>' :
+            (!stuck && Date.now()-Date.parse(x.at) < 86400000) ? '<span class="tag new">new</span>' : '';
+  return '<a class="orow" href="'+ADMIN+esc(x.id)+'" target="_blank" rel="noopener" title="'+esc(clock(x.at))+' · '+esc(x.fulfilment.toLowerCase().replace(/_/g,' '))+'">'+
+    '<span class="on">'+esc(x.name)+'</span>'+(where?'<span class="tag'+(x.country&&x.country!=='AU'?' us':'')+'">'+esc(where)+'</span>':'')+tag+
+    '<span class="od">'+esc(items||'–')+'</span>'+(stuck?'<span class="age num">'+x.ageDays+' days</span>':'<span class="ov num">'+(x.exchange?'':money(x.total))+'</span>')+'</a>';
+}
+
+/* ---------- jobs ---------- */
+function renderJobs(){
+  var j = D.jobs, st = (D.status||{}).jobs || {};
+  if(!j){ $('n-jobs').textContent='0'; $('jobs').innerHTML='<div class="note">'+esc(plainError(st.error||'never refreshed'))+'</div>'; $('f-jobs').innerHTML=statusLine('jobs','Jobs'); return; }
+  var open = (j.inProgress||[]).length + (j.waiting||[]).length;
+  $('n-jobs').textContent = open; $('n-jobs').className='count'+(open?'':' zero');
+  var h = '';
+  var group = function(title, rows, limit){
+    if(!rows.length) return '';
+    var g = '<div class="sub"><span>'+title+' ('+rows.length+')</span></div>';
+    rows.slice(0, limit).forEach(function(x){
+      g += '<div class="jrow"><div class="jhead"><span class="biz '+esc(x.business)+'">'+esc(x.business||'?')+'</span><span class="jt">'+esc(x.title)+'</span></div>'+
+        (x.note?'<div class="jn">'+esc(x.note)+'</div>':'')+
+        '<div class="jmeta"><span>'+esc(ago(x.at))+'</span>'+(x.resume?'<button class="copy" type="button" data-copy="'+esc(x.resume)+'" title="'+esc(x.resume)+'">Copy resume</button>':'')+'</div></div>';
+    });
+    if(rows.length > limit) g += '<details><summary class="sub"><span><span class="chev">›</span> '+(rows.length-limit)+' more</span></summary>'+rows.slice(limit).map(function(x){
+      return '<div class="jrow"><div class="jhead"><span class="biz '+esc(x.business)+'">'+esc(x.business||'?')+'</span><span class="jt">'+esc(x.title)+'</span></div><div class="jmeta"><span>'+esc(ago(x.at))+'</span></div></div>';
+    }).join('')+'</details>';
+    return g;
+  };
+  h += group('In progress', j.inProgress||[], 6);
+  h += group('Waiting on you', j.waiting||[], 8);
+  h += group('About to start', j.queued||[], 4);
+  if(!open && !(j.queued||[]).length) h += '<div class="empty">Nothing open. A clear desk.</div>';
+  $('jobs').innerHTML = h;
+  $('f-jobs').innerHTML = '<span>Board copied '+esc(ago(j.exportedAt))+'</span><span>'+(j.doneThisWeek||0)+' done this week'+(j.waitingOlder?' · '+j.waitingOlder+' older waits':'')+'</span>';
+}
+
+/* ---------- page ---------- */
+function render(){
+  $('setup').hidden = true; $('app').hidden = false;
+  var hr = new Date().getHours();
+  $('greet').textContent = (hr < 12 ? 'Morning, Chris' : hr < 17 ? 'Afternoon, Chris' : 'Evening, Chris') + ' · ' + new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  safe('money', renderMoney); safe('mail', renderMail); safe('orders', renderOrders); safe('jobs', renderJobs);
+  tick();
+}
+function tick(){
+  var s = $('sync');
+  if(FAIL && D){ s.className='sync warn'; s.textContent='Offline, showing '+ago(D.generatedAt).replace(' ago','')+' old data'; return; }
+  if(new URLSearchParams(location.search).get('data')){ s.className='sync warn'; s.textContent='Preview: sample money figures, test mail'; return; }
+  s.className='sync'; s.textContent = D ? 'Loaded '+ago(new Date(LAST_OK).toISOString()) : '';
+}
+function dataUrl(){
+  var q = new URLSearchParams(location.search);
+  if(q.get('data')) return q.get('data');                       // local preview only: a JSON file next to the page
+  var c = cfg(); if(!c) return null;
+  return c.api + (c.api.indexOf('?')>-1?'&':'?') + 'key=' + encodeURIComponent(c.key) + '&view=workbench';
+}
+function load(fromSetup){
+  var url = dataUrl();
+  if(!url){ showSetup(''); return Promise.resolve(); }
+  return fetch(url, {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){
+      if(!d || d.error) throw new Error(d && d.error || 'empty reply');
+      if(d.view !== 'workbench') throw new Error('the script is the old version (re-paste Code.gs and deploy a new version)');
+      D = d; FAIL = ''; LAST_OK = Date.now(); try{ localStorage.setItem(GOOD, JSON.stringify(d)); }catch(e){}
+      render();
+    }, function(e){
+      FAIL = e.message || String(e);
+      if(!D){ try{ D = JSON.parse(localStorage.getItem(GOOD)); }catch(x){ D = null; } }
+      if(D && !fromSetup){ render(); return; }
+      showSetup('Could not load the workbench: '+FAIL);
+    });
+}
+function showSetup(msg){
+  $('app').hidden = true; $('setup').hidden = false;
+  var c = cfg(); if(c) $('su-api').value = c.api;
+  $('su-err').textContent = msg || '';
+}
+function post(body){
+  var c = cfg(); if(!c) return Promise.reject(new Error('not set up'));
+  body.key = c.key;
+  return fetch(c.api + (c.api.indexOf('?')>-1?'&':'?') + 'key=' + encodeURIComponent(c.key), {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body)})
+    .then(function(r){ return r.json(); }).then(function(j){ if(!j.ok) throw new Error(j.error||'failed'); return j; });
+}
+
+document.addEventListener('click', function(e){
+  var d = e.target.closest('[data-dismiss]');
+  if(d){
+    var key = d.getAttribute('data-dismiss'), row = d.closest('.mrow');
+    if(row) row.style.opacity = '.35';
+    post({action:'mail.dismiss', key:key, subject:d.getAttribute('data-subject')}).then(function(){
+      ['toMe','cc'].forEach(function(k){ D.replies[k] = (D.replies[k]||[]).filter(function(t){ return t.key !== key; }); });
+      D.replies.dismissed = (D.replies.dismissed||0)+1; safe('mail', renderMail);
+    }, function(err){ if(row) row.style.opacity = ''; alertLine('Could not hide it: '+err.message); });
+    return;
+  }
+  var c = e.target.closest('[data-copy]');
+  if(c){
+    var txt = c.getAttribute('data-copy');
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ c.textContent='Copied'; c.classList.add('ok'); setTimeout(function(){ c.textContent='Copy resume'; c.classList.remove('ok'); }, 1600); },
+      function(){ window.prompt('Copy this:', txt); });
+  }
+});
+function alertLine(msg){ var s=$('sync'); s.className='sync warn'; s.textContent=msg; }
+$('refresh').addEventListener('click', function(){
+  var b = this; b.classList.add('busy'); b.textContent = 'Refreshing…';
+  post({action:'refresh', which:'work'}).then(function(){ return load(false); }, function(err){ alertLine('Refresh failed: '+err.message); })
+    .then(function(){ b.classList.remove('busy'); b.textContent = 'Refresh now'; });
+});
+$('setup-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var raw = $('su-api').value.trim(), m = raw.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/);
+  var api = m ? m[0] : raw.split('?')[0], key = $('su-key').value.trim().replace(/[^A-Za-z0-9]/g,'');
+  if(!api || !key){ $('su-err').textContent='Both boxes are needed.'; return; }
+  store('fridge.cfg', {api:api, key:key}); $('su-err').textContent='Connecting…'; load(true);
+});
+(function boot(){
+  var q = new URLSearchParams(location.search);
+  if(q.get('api') && q.get('key')){ store('fridge.cfg', {api:q.get('api'), key:q.get('key')}); history.replaceState(null,'',location.pathname); }
+  load(false);
+  setInterval(function(){ load(false); }, 5*60000);
+  setInterval(tick, 30000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && Date.now()-LAST_OK > 2*60000) load(false); });
+})();
+})();
+</script>
+</body>
+</html>
