@@ -376,7 +376,9 @@ button.more{text-align:left}
 #setup .err{color:var(--red);font-size:13.5px}
 
 /* dim screen */
-#dim{position:fixed;inset:0;background:#15171E;color:#8A8D99;display:grid;place-content:center;text-align:center;z-index:50;cursor:pointer}
+/* the dim screen runs under the home bar too, and the page behind it goes dark, so no ivory strip shows at the bottom of a full-screen iPad */
+html.dimmed,html.dimmed body{background:#15171E}
+#dim{position:fixed;inset:0;bottom:calc(-1 * env(safe-area-inset-bottom, 0px));padding-bottom:env(safe-area-inset-bottom, 0px);background:#15171E;color:#8A8D99;display:grid;place-content:center;text-align:center;z-index:50;cursor:pointer}
 #dim .dim-t{font-size:min(20vw,170px);font-weight:500;letter-spacing:-.03em;color:#D8D2C3;line-height:1}
 #dim .dim-d{font-family:var(--fs);font-style:italic;font-size:24px;margin-top:10px;color:#A09A8C}
 #dim .dim-w{font-size:19px;margin-top:16px;color:#A9C5DD;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:9px}
@@ -1414,8 +1416,8 @@ function dimTick(){ var n=now(), td=today0(); $('dim-clock').textContent=hm(n).r
   var nx=eventsOn(td).filter(function(x){return !x.span && x.s>n;})[0], tmr=false; if(!nx){ nx=eventsOn(addDays(td,1)).filter(function(x){return !x.span;})[0]; tmr=true; }
   $('dim-next').textContent = nx? 'Next: '+nx.t+' · '+(tmr?'tomorrow ':'')+hm(nx.s) : '';
   var w=D.weather, wt=w&&w.current? wxText(w) : ''; $('dim-wx').innerHTML = wt? wxIcon(w.current.weather_code, isNight(n))+'<span>'+wt+'</span>' : ''; }
-function showDim(){ dimTick(); $('dim').hidden=false; S.mode='home'; S.hv='week'; S.hoff=0; renderHomeCal(); showMode(); }
-function poke(){ clearTimeout(idle); $('dim').hidden=true; if(!PHONE.matches) idle=setTimeout(showDim, DIM_MS); } /* a phone sleeps on its own, so it never dims to the clock */
+function showDim(){ dimTick(); $('dim').hidden=false; document.documentElement.classList.add('dimmed'); S.mode='home'; S.hv='week'; S.hoff=0; renderHomeCal(); showMode(); }
+function poke(){ clearTimeout(idle); $('dim').hidden=true; document.documentElement.classList.remove('dimmed'); if(!PHONE.matches) idle=setTimeout(showDim, DIM_MS); } /* a phone sleeps on its own, so it never dims to the clock */
 ['touchstart','mousedown','keydown'].forEach(function(t){ document.addEventListener(t, poke, {passive:true}); }); poke();
 setInterval(function(){ if(!$('dim').hidden) dimTick(); }, 20000);
 window.addEventListener('resize', function(){ if(S.mode==='stl'&&S.tab==='numbers') drawChart(); if(S.mode==='health') renderHealth(); });
