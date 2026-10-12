@@ -196,13 +196,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .add .pick button{width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:700;background:var(--ct);color:var(--cx,var(--c))}
 .add .pick button[aria-pressed="true"]{background:var(--cx,var(--c));color:var(--card)}
 
-/* STL numbers */
-#stl-numbers{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr)}
-.kpi:first-child,.ht:first-child{background:var(--sky-t)}
-.kpi .big{font-size:50px;font-weight:600;letter-spacing:-.03em;line-height:1.05;margin-top:12px}
-.kpi .big small{font-size:22px;font-weight:600;color:var(--ink-2)}
-.kpi .cap{font-size:13px;color:var(--ink-3);margin-top:4px}
-.kpi .rows{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+/* STL numbers: six tiles read top-down (3 days big, 7 and 14 days under, no daily numbers), then the rolling 3-day MER curve and the 7-day dial */
+#stl-numbers{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr)}
+.ht:first-child{background:var(--sky-t)}
+.kpi.z-green{background:var(--green-t)} .kpi.z-amber{background:var(--amber-t)} .kpi.z-red{background:var(--red-t)}
+.kpi .big{font-size:38px;font-weight:600;letter-spacing:-.03em;line-height:1.05;margin-top:12px;white-space:nowrap}
+.kpi .big small{display:block;font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.kpi .cap{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+.kpi .split{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.nbar{height:6px;border-radius:3px;background:var(--choc-t);margin-top:6px;overflow:hidden} .nbar i{display:block;height:100%;background:var(--sky)}
+.kpi .rows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.kpi .rows{margin-top:14px}
+.merbox{flex:1;min-height:0;display:flex;gap:18px;align-items:stretch}
+.merbox .chart{flex:1}
+.dial{width:200px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.dial svg{width:180px;height:auto}
+.dial .big{font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.dial .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 .kpi .rows .v{font-size:18px;font-weight:600;white-space:nowrap}
 .kpi .rows .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:2px}
 .kpi .note{font-size:12px;color:var(--amber);margin-top:10px}
@@ -212,7 +222,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
 
 /* content: a 7-day strip, colour-coded by channel */
-#stl-content{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr)}
+#stl-content{grid-template-columns:minmax(0,3fr) minmax(0,1fr)}
 .cweek{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;flex:1;min-height:0}
 .cday{display:flex;flex-direction:column;min-height:0;border-radius:16px;padding:12px 6px 6px;background:var(--card-2)}
 .cday.is-today{background:var(--sky-t)}
@@ -220,11 +230,16 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .cday .dh b{font-size:22px;font-weight:600}
 .cday .dh span{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
 .cday.is-today .dh b{color:var(--red)}
-.cday .items{display:flex;flex-direction:column;gap:5px;overflow:hidden;min-height:0}
+.cday .items{display:flex;flex-direction:column;gap:5px;overflow-y:auto;min-height:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .cchip{padding:7px 6px 7px 7px;border-radius:10px;background:var(--ct);font-size:12.5px;line-height:1.3;min-width:0;border-left:3px solid var(--c);flex:none}
 .cchip .ct{font-size:9.5px;font-weight:700;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:clip;text-transform:uppercase;color:var(--cx,var(--c));display:block;margin-bottom:1px}
-.cchip .cx{font-weight:500;overflow-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.cchip .cx{font-weight:500;overflow-wrap:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .cchip.past{opacity:.55}
+.ch-story{--c:var(--ig);--ct:var(--card);--cx:var(--ig-x)} .cchip.ch-story{border-left-style:dashed;box-shadow:inset 0 0 0 1px var(--line)}
+.cchip .cs{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--amber);background:var(--amber-t);border-radius:5px;padding:1px 5px;margin-top:3px}
+.cnav{display:flex;align-items:center;gap:6px}
+.cnav .cal-title{font-size:13.5px}
+button.more{text-align:left}
 .cchip .cm{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .cday .wait{font-size:13px}
 .ci{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
@@ -278,8 +293,38 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .stages i.on{background:var(--chris)}
 .stage-l{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-size:10px;color:var(--ink-3);margin-top:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
 
-/* ads */
+/* ads: live ad sets, laid out like the STL dashboard v6 */
 #stl-ads{grid-template-columns:minmax(0,2.4fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+.aset{padding:14px 16px;border-radius:16px;background:var(--card-2);border-left:4px solid var(--chris);margin-bottom:10px}
+.aset .ah{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.aset .an{font-weight:600;font-size:15.5px;min-width:0;overflow-wrap:anywhere}
+.aset .abud{flex:none;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--fill);border-radius:8px;padding:3px 8px}
+.aset .alive{font-size:12px;color:var(--ink-3);margin-top:2px}
+.agrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 8px;margin-top:12px}
+.ag i{display:block;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ag b{display:block;font-size:17px;font-weight:600;margin-top:1px;white-space:nowrap}
+.a7{font-size:12.5px;color:var(--ink-2);margin-top:12px;padding-top:9px;border-top:1px solid var(--line)}
+.a7 b{font-weight:600;color:var(--ink);margin-right:4px}
+
+/* orders: what sold as product photos, then the orders themselves */
+#stl-orders{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.sold{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
+.sitem{min-width:0}
+.sitem .ph{position:relative;aspect-ratio:3/4;border-radius:14px;background:var(--card-2) center/cover no-repeat;overflow:hidden}
+.sitem .ph b{position:absolute;right:7px;top:7px;min-width:26px;height:26px;padding:0 7px;box-sizing:border-box;border-radius:13px;background:var(--ink);color:var(--card);font-size:13.5px;display:grid;place-items:center}
+.sitem .ph .ini{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--fs);font-style:italic;color:var(--ink-3);font-size:22px}
+.sitem .t{font-size:13px;margin-top:6px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sitem .z{font-size:12px;color:var(--ink-3);margin-top:2px}
+.orow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none}
+.orow:first-child{border-top:0}
+.orow .thumb{width:44px;height:58px;border-radius:10px}
+.orow .ot{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .oi{font-size:12.5px;color:var(--ink-2);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.orow .ov{text-align:right;font-size:14.5px;font-weight:600;white-space:nowrap}
+.orow .ov small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-3)}
+.otag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 5px;border-radius:5px;margin-left:6px;vertical-align:1px;background:var(--fill);color:var(--ink-2)}
+.otag.late{background:var(--red-t);color:var(--red)}
+.osub{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--choc);margin:18px 0 6px}
 .adtable{width:100%;border-collapse:collapse;font-size:13.5px}
 .adtable th{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:right;padding:6px 5px;border-bottom:1px solid var(--line);white-space:nowrap}
 .adtable th:first-child,.adtable td:first-child{text-align:left;padding-left:0}
@@ -368,18 +413,19 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 @media (prefers-reduced-motion: reduce){ .bar .fillb{animation:none} *{transition:none!important} }
 @media (max-width: 820px){
   body{overflow:auto} .app{height:auto}
-  #home,#stl-numbers,#stl-content,#stl-product,#stl-ads,#health{grid-template-columns:1fr;grid-template-rows:none}
+  #home,#stl-numbers,#stl-content,#stl-product,#stl-ads,#stl-orders,#health{grid-template-columns:1fr;grid-template-rows:none}
+  #stl-numbers{grid-template-columns:repeat(3,minmax(0,1fr))}
   .band{flex-direction:column;align-items:flex-start} .band-q{align-items:flex-start;text-align:left;max-width:none}
   .hweek{--cols:repeat(7,minmax(90px,1fr));overflow-x:auto}
   #health .card,#stl-ads .card{grid-column:auto!important}
-  .chartp{min-height:260px} .top{flex-wrap:wrap} .dow{font-size:44px}
+  .chartp{min-height:300px} .top{flex-wrap:wrap} .dow{font-size:44px}
   .cweek{grid-template-columns:repeat(7,minmax(70px,1fr));overflow-x:auto}
   .adwrap{overflow-x:auto}
 }
 @media (max-width: 600px){
   .app{padding:0 12px calc(16px + env(safe-area-inset-bottom));gap:12px;grid-template-columns:minmax(0,1fr);width:100%;overflow-x:hidden}
   .view{gap:12px}
-  #home,#stl-content,#stl-product,#stl-ads{grid-template-columns:minmax(0,1fr)}
+  #home,#stl-content,#stl-product,#stl-ads,#stl-orders{grid-template-columns:minmax(0,1fr)}
   .sync{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;text-align:right}
   .card{padding:16px 14px 14px;border-radius:18px}
   /* the mode switch sits flush at the very top, under the status bar, and stays there while the page scrolls */
@@ -418,10 +464,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
   .add .pick{margin-left:auto}
   /* say the label */
   #stl-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .kpi .big{font-size:32px;margin-top:6px} .kpi .big small{font-size:16px}
-  .kpi .rows{grid-template-columns:1fr;gap:8px;margin-top:12px}
+  .kpi .big{font-size:28px;margin-top:6px} .kpi .big small{font-size:10px}
+  .kpi .rows{gap:8px;margin-top:12px}
   .kpi .rows .v{font-size:15px}
-  .chartp{min-height:240px}
+  .chartp{grid-column:1 / -1;min-height:0}
+  .merbox{flex-direction:column;gap:6px} .merbox .chart{min-height:220px;flex:none;height:220px}
+  .dial{width:auto;flex-direction:row;gap:14px;justify-content:flex-start;text-align:left} .dial svg{width:130px}
+  .agrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 6px} .ag b{font-size:14px} .ag i{font-size:9.5px;letter-spacing:.04em}
+  .aset{padding:12px}
+  .sold{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .cweek{grid-template-columns:1fr;overflow:visible}
   .cday{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;padding:10px}
   .cday .dh{flex-direction:column;gap:0;padding:0}
@@ -452,6 +503,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
     </div>
     <div class="seg" id="stl-tabs" role="group" aria-label="Say The Label view" hidden>
       <button data-tab="numbers" aria-pressed="true">Numbers</button>
+      <button data-tab="orders" aria-pressed="false">Orders</button>
       <button data-tab="content" aria-pressed="false">Content</button>
       <button data-tab="ads" aria-pressed="false">Ads</button>
       <button data-tab="product" aria-pressed="false">Product</button>
@@ -515,21 +567,30 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 
   <!-- STL NUMBERS -->
   <main class="view" id="stl-numbers" hidden>
-    <section class="card kpi" id="k-rev"></section>
     <section class="card kpi" id="k-mer"></section>
-    <section class="card kpi" id="k-roas"></section>
+    <section class="card kpi" id="k-rev"></section>
     <section class="card kpi" id="k-spend"></section>
+    <section class="card kpi" id="k-orders"></section>
+    <section class="card kpi" id="k-conv"></section>
+    <section class="card kpi" id="k-roas"></section>
     <section class="card chartp">
-      <div class="ch"><span class="eyebrow">Last 14 days</span>
-        <div class="legend"><span><i class="sw" style="background:var(--choc)"></i>Revenue</span><span><i class="sw" style="background:var(--chris)"></i>Ad spend</span></div></div>
-      <div class="chart" id="chart"></div>
+      <div class="ch"><span class="eyebrow">MER, rolling 3 days</span>
+        <div class="legend"><span><i class="sw" style="background:var(--green-f)"></i>under 35%</span><span><i class="sw" style="background:var(--amber-f)"></i>35 to 50%</span><span><i class="sw" style="background:var(--red-f)"></i>over 50%</span><span><i class="sw" style="background:var(--choc);opacity:.35"></i>daily revenue</span></div></div>
+      <div class="merbox"><div class="chart" id="chart"></div><div class="dial" id="dial"></div></div>
+      <div class="faint" id="k-note" style="font-size:12px;margin-top:8px"></div>
     </section>
+  </main>
+
+  <!-- STL ORDERS -->
+  <main class="view" id="stl-orders" hidden>
+    <section class="card"><div class="ch"><span class="eyebrow">What sold</span><span class="faint" id="o-sub" style="font-size:12.5px"></span></div><div class="scroll" id="o-sold" style="flex:1"></div></section>
+    <section class="card"><div class="ch"><span class="eyebrow">Orders</span><span class="faint" id="o-count" style="font-size:12.5px"></span></div><div class="scroll" id="o-list" style="flex:1"></div></section>
   </main>
 
   <!-- STL CONTENT -->
   <main class="view" id="stl-content" hidden>
     <section class="card">
-      <div class="ch"><span class="eyebrow">This week</span>
+      <div class="ch"><div class="cnav"><button class="icon-btn" id="cw-prev" aria-label="Previous week"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 2 4 7l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="icon-btn" id="cw-next" aria-label="Next week"><svg width="14" height="14" viewBox="0 0 14 14"><path d="m5 2 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="cal-title eyebrow" id="cw-title" aria-label="Back to this week">This week</button></div>
         <div class="legend"><span><i class="dot" style="background:var(--ig)"></i>Instagram</span><span><i class="dot" style="background:var(--tt)"></i>TikTok</span><span><i class="dot" style="background:var(--em)"></i>Email</span><span><i class="dot" style="background:var(--sh)"></i>Shoot</span></div></div>
       <div class="cweek" id="c-week" lang="en-AU"></div>
       <div class="faint" id="c-note" style="font-size:12px;margin-top:10px"></div>
@@ -549,9 +610,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
   <!-- STL ADS -->
   <main class="view" id="stl-ads" hidden>
     <section class="card" style="grid-row:span 2">
-      <div class="ch"><span class="eyebrow">Meta ad sets</span>
-        <div class="seg" role="group" aria-label="Window"><button data-aw="1" aria-pressed="false">Yesterday</button><button data-aw="3" aria-pressed="true">3 days</button><button data-aw="7" aria-pressed="false">7 days</button></div></div>
-      <div class="scroll adwrap" id="a-table" style="flex:1"></div>
+      <div class="ch"><span class="eyebrow">Live ad sets</span><span class="faint" id="a-sub" style="font-size:12.5px;text-align:right"></span></div>
+      <div class="scroll" id="a-sets" style="flex:1"></div>
     </section>
     <section class="card"><div class="ch"><span class="eyebrow">Email, last 7 days</span></div><div id="a-email" class="scroll" style="flex:1"></div></section>
     <section class="card"><div class="ch"><span class="eyebrow">Google Ads</span></div><div id="a-google"></div></section>
@@ -629,15 +689,16 @@ function eventsOn(day){
 var KIND_LABEL={shift:'Shift',trip:'Trip',health:'Training',party:'Social',birthday:'Birthday',holiday:'Public holiday'};
 
 /* ---------- state ---------- */
-var S = { mode:'home', tab:'numbers', hv:'week', hoff:0, list:'todo', addWho:'both', cAddWho:'sophie', who:'chris', aw:'7' };
+var S = { mode:'home', tab:'numbers', hv:'week', hoff:0, list:'todo', addWho:'both', cAddWho:'sophie', who:'chris', coff:0, cexp:{} };
 function showMode(){
   setPressed('[data-mode]','data-mode',S.mode); setPressed('[data-tab]','data-tab',S.tab); setPressed('[data-h]','data-h',S.who);
   $('stl-tabs').hidden = S.mode!=='stl'; $('h-tabs').hidden = S.mode!=='health';
   $('home').hidden = S.mode!=='home'; $('health').hidden = S.mode!=='health';
-  ['numbers','content','ads','product'].forEach(function(t){ $('stl-'+t).hidden = !(S.mode==='stl' && S.tab===t); });
+  ['numbers','orders','content','ads','product'].forEach(function(t){ $('stl-'+t).hidden = !(S.mode==='stl' && S.tab===t); });
   if(S.mode==='stl' && S.tab==='numbers') drawChart();
   if(S.mode==='stl' && S.tab==='product') renderProduct();
   if(S.mode==='stl' && S.tab==='ads') renderAds();
+  if(S.mode==='stl' && S.tab==='orders') renderOrders();
   if(S.mode==='health') renderHealth();
   feet();
 }
@@ -787,45 +848,93 @@ function renderLists(){
 }
 
 /* ---------- STL: numbers ---------- */
-function sumWin(days, key, n, skipLast){ return days.slice(0, days.length-(skipLast?1:0)).slice(-n).reduce(function(s,d){ return s+(d[key]||0); },0); }
-function renderNumbers(){
-  var days=(D.stl&&D.stl.daily)||[]; if(!days.length) return;
-  days.forEach(function(d){ d.spend=(d.meta||0)+(d.google||0); });
-  var t=days[days.length-1], y=days[days.length-2]||{};
-  var r1=t.revenue, r3=sumWin(days,'revenue',3,true), r7=sumWin(days,'revenue',7,true), r14=sumWin(days,'revenue',14,true);
-  var s3=sumWin(days,'spend',3,true), s7=sumWin(days,'spend',7,true), s14=sumWin(days,'spend',14,true);
-  var v3=sumWin(days,'metaValue',3,true), v7=sumWin(days,'metaValue',7,true), v14=sumWin(days,'metaValue',14,true);
-  var m3=sumWin(days,'meta',3,true), m7=sumWin(days,'meta',7,true), m14=sumWin(days,'meta',14,true);
-  var noGoogle = days.every(function(d){ return d.google==null; });
-  // A window is only quotable when every complete day in it has a Meta spend row (rule 79: same days on every input).
-  var gap=function(n){ var w=days.slice(0,days.length-1).slice(-n); return !w.length || w.some(function(d){ return d.meta==null; }); };
-  var g1=gap(1), g3=gap(3), g7=gap(7), g14=gap(14), WAIT='waiting on Meta spend';
-  function tile(id,label,big,cap,rows,note){
-    $(id).innerHTML='<span class="eyebrow">'+label+'</span><div class="big num">'+big+'</div><div class="cap">'+cap+'</div><div class="rows">'+
-      rows.map(function(r){ return '<div><div class="v num">'+r[1]+'</div><div class="l">'+r[0]+'</div></div>'; }).join('')+'</div>'+(note?'<div class="note">'+note+'</div>':'');
-  }
-  var x=function(a,b,g){ return !g&&b? (a/b).toFixed(2)+'<small>×</small>':'–'; }, xs=function(a,b,g){ return !g&&b? (a/b).toFixed(2)+'×':'–'; };
-  tile('k-rev','Revenue', money(r1), 'today so far · '+t.orders+' orders', [['Yesterday',kfmt(y.revenue)],['3 days',kfmt(r3)],['7 days',kfmt(r7)]]);
-  tile('k-mer','MER', x(y.revenue,y.spend,g1), g1?WAIT:'revenue ÷ all ad spend, yesterday', [['3 days',xs(r3,s3,g3)],['7 days',xs(r7,s7,g7)],['14 days',xs(r14,s14,g14)]], g7?'':(noGoogle?'Meta only until Google Ads is connected':''));
-  tile('k-roas','Meta ROAS', x(y.metaValue,y.meta,g1), g1?WAIT:'Meta-reported value ÷ spend, yesterday', [['3 days',xs(v3,m3,g3)],['7 days',xs(v7,m7,g7)],['14 days',xs(v14,m14,g14)]]);
-  tile('k-spend','Ad spend', g1?'–':money(y.spend), g1?WAIT:'yesterday, Meta'+(noGoogle?'':' + Google'), [['Meta 7d',g7?'–':kfmt(m7)],['Google 7d',noGoogle?'–':kfmt(sumWin(days,'google',7,true))],['All 7d',g7?'–':kfmt(s7)]], noGoogle?'Google Ads not connected yet':'');
+/* Windows are the last 3, 7 and 14 COMPLETE days (today is never in them, LESSONS rule 79). MER = Meta spend / revenue as a percent,
+   Meta only, the STL dashboard v6 basis; zones green under 35, amber to 50, red above. A window with a day missing its Meta spend shows no MER. */
+function zoneOf(v){ return v==null? '' : v<35? 'green' : v<50? 'amber' : 'red'; }
+function doneDays(){ var td=ymd(today0()); return ((D.stl&&D.stl.daily)||[]).filter(function(d){ return d.date<td; }); }
+function winStats(days, n){
+  var w=days.slice(-n), r={n:w.length, from:w.length?w[0].date:null, to:w.length?w[w.length-1].date:null, revenue:0, orders:0, meta:0, metaValue:0, sessions:0, checkouts:0, nc:0, rc:0, gap:w.length<n, noValue:false, noSess:false, noCust:false};
+  w.forEach(function(d){ r.revenue+=d.revenue||0; r.orders+=d.orders||0;
+    if(d.meta==null) r.gap=true; else r.meta+=d.meta;
+    if(d.metaValue==null) r.noValue=true; else r.metaValue+=d.metaValue;
+    if(d.sessions==null) r.noSess=true; else { r.sessions+=d.sessions; r.checkouts+=d.checkouts||0; }
+    if(d.newCustomers==null) r.noCust=true; else { r.nc+=d.newCustomers; r.rc+=d.returningCustomers||0; } });
+  r.mer = !r.gap && r.revenue>0? r.meta/r.revenue*100 : null;
+  r.roas = !r.gap && !r.noValue && r.meta>0? r.metaValue/r.meta : null;
+  r.blended = !r.gap && r.meta>0? r.revenue/r.meta : null;
+  r.conv = !r.noSess && r.sessions>0? r.orders/r.sessions*100 : null;   /* orders ÷ sessions, the v6 basis, so the two boards agree */
+  return r;
 }
+function shortDay(ds){ var d=parseDay(ds); return d.getDate()+' '+MON[d.getMonth()].slice(0,3); }
+function spanLabel(a,b){ if(!a||!b) return ''; var x=parseDay(a), y=parseDay(b); return x.getMonth()===y.getMonth()? x.getDate()+'-'+shortDay(b) : shortDay(a)+' to '+shortDay(b); }
+function renderNumbers(){
+  var days=doneDays(); if(!days.length) return;
+  var W={3:winStats(days,3), 7:winStats(days,7), 14:winStats(days,14)};
+  function tile(id,label,f,cap,extra,cls){
+    var el=$(id); el.className='card kpi'+(cls?' '+cls:'');
+    el.innerHTML='<span class="eyebrow">'+label+'</span><div class="big num">'+f(W[3])+'<small>3 days</small></div>'+(cap?'<div class="cap">'+cap+'</div>':'')+(extra||'')+
+      '<div class="rows"><div><div class="v num">'+f(W[7])+'</div><div class="l">7 days</div></div><div><div class="v num">'+f(W[14])+'</div><div class="l">14 days</div></div></div>';
+  }
+  var noMeta = W[3].gap, any=function(k){ return W[3][k] && W[7][k] && W[14][k]; };
+  tile('k-mer','MER', function(w){ return w.mer==null? '–' : '<span class="tone-'+zoneOf(w.mer)+'">'+w.mer.toFixed(1)+'%</span>'; },
+    noMeta? 'waiting on Meta spend' : 'Meta spend ÷ revenue', '', W[3].mer==null? '' : 'z-'+zoneOf(W[3].mer));
+  tile('k-rev','Revenue', function(w){ return kfmt(w.revenue); }, 'incl GST, complete days');
+  tile('k-spend','Meta spend', function(w){ return w.gap? '–' : kfmt(w.meta); }, noMeta? 'waiting on Meta spend' : 'from the AdSpend tab');
+  var split='';
+  if(!W[3].noCust && (W[3].nc+W[3].rc)>0) split='<div class="split">'+W[3].nc+' new · '+W[3].rc+' returning</div><div class="nbar" title="share of new customers, 3 days"><i style="width:'+Math.round(W[3].nc/(W[3].nc+W[3].rc)*100)+'%"></i></div>';
+  tile('k-orders','Orders', function(w){ return String(w.orders); }, any('noCust')? 'new vs returning: waiting on the script update' : '', split);
+  tile('k-conv','Conversion', function(w){ return w.conv==null? '–' : w.conv.toFixed(2)+'%'; },
+    any('noSess')? 'waiting on the script update' : (W[3].sessions? W[3].sessions.toLocaleString('en-AU')+' sessions' : 'no sessions'));
+  var metaRoas = !W[3].noValue && !W[7].noValue;
+  tile('k-roas','ROAS', function(w){ var v=metaRoas? w.roas : w.blended; return v==null? '–' : v.toFixed(2); }, metaRoas? 'Meta-reported value ÷ spend' : 'revenue ÷ Meta spend');
+  $('k-note').textContent = '3 days = '+spanLabel(W[3].from,W[3].to)+' · 7 days = '+spanLabel(W[7].from,W[7].to)+' · 14 days = '+spanLabel(W[14].from,W[14].to)+'. Complete days only: today rolls in tomorrow.';
+}
+/* the curve: for each of the last 14 complete days, MER over that day and the two before it (v6's rolling 3-day MER) */
+function merSeries(){
+  var days=doneDays(), out=[];
+  for(var i=Math.max(0,days.length-14); i<days.length; i++){
+    var w=days.slice(Math.max(0,i-2), i+1), ok=w.length===3 && w.every(function(d){ return d.meta!=null; });
+    var rev=w.reduce(function(a,d){ return a+(d.revenue||0); },0), sp=w.reduce(function(a,d){ return a+(d.meta||0); },0);
+    out.push({d:days[i].date, rev:days[i].revenue||0, orders:days[i].orders||0, mer: ok&&rev>0? sp/rev*100 : null});
+  }
+  return out;
+}
+var ZC={green:'var(--green-f)', amber:'var(--amber-f)', red:'var(--red-f)'};
 function drawChart(){
-  var days=(D.stl&&D.stl.daily)||[], box=$('chart'); if(!days.length||!box.clientWidth) return;
-  var W=box.clientWidth, H=box.clientHeight, padL=44, padR=10, padT=10, padB=26;
-  var max=Math.max.apply(null, days.map(function(d){ return Math.max(d.revenue||0, (d.meta||0)+(d.google||0)); }));
-  var step=500; while(max/step>5) step*=2; var top=Math.ceil(max/step)*step;
-  var iw=W-padL-padR, ih=H-padT-padB, bw=iw/days.length, y=function(v){ return padT+ih-(v/top)*ih; };
-  var g='', bars='', lab='';
-  for(var v=0; v<=top; v+=step){ g+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)"/><text x="'+(padL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--ink-3)" '+FONT+'>'+(v>=1000?(v/1000)+'k':v)+'</text>'; }
-  days.forEach(function(d,i){
-    var x=padL+i*bw, part=i===days.length-1, dt=parseDay(d.date);
-    var sp=(d.meta||0)+(d.google||0), w=bw*.3, g1=x+bw*.17, g2=x+bw*.53;
-    bars+='<rect x="'+g1+'" y="'+y(d.revenue||0)+'" width="'+w+'" height="'+Math.max(ih-(y(d.revenue||0)-padT),0)+'" rx="5" fill="var(--choc)" opacity="'+(part?.4:.9)+'"><title>'+d.date+' revenue '+money(d.revenue)+'</title></rect>';
-    bars+='<rect x="'+g2+'" y="'+y(sp)+'" width="'+w+'" height="'+Math.max(ih-(y(sp)-padT),0)+'" rx="5" fill="var(--chris)" opacity="'+(part?.4:.9)+'"><title>'+d.date+' ad spend '+money(sp)+'</title></rect>';
-    lab+='<text x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" fill="var(--ink-3)" '+FONT+'>'+((days.length-1-i)%2===0? (part?'Today':DOW[dt.getDay()]+' '+dt.getDate()):'')+'</text>';
-  });
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Daily revenue and ad spend">'+g+bars+lab+'</svg>';
+  var box=$('chart'); if(!box) return; drawDial(); if(!box.clientWidth) return;
+  var S2=merSeries(); if(!S2.length){ box.innerHTML='<div class="wait" style="padding:20px 0">No sales history yet.</div>'; return; }
+  var W=box.clientWidth, H=Math.max(box.clientHeight,180), padL=38, padR=14, padT=26, padB=24, cw=W-padL-padR, ch=H-padT-padB;
+  var pts=S2.map(function(d,i){ return d.mer==null? null : {i:i, v:d.mer}; }).filter(Boolean);
+  var maxM=Math.min(160, Math.max(100, Math.ceil(Math.max.apply(null, pts.map(function(p){return p.v;}).concat([0]))/25)*25));
+  var y=function(v){ return padT+ch-(Math.min(v,maxM)/maxM)*ch; }, x=function(i){ return padL+(S2.length<2? cw/2 : i/(S2.length-1)*cw); };
+  var g='<rect x="'+padL+'" y="'+y(35)+'" width="'+cw+'" height="'+(y(0)-y(35))+'" fill="var(--green-f)" opacity=".1"/>'+
+        '<rect x="'+padL+'" y="'+y(50)+'" width="'+cw+'" height="'+(y(35)-y(50))+'" fill="var(--amber-f)" opacity=".12"/>'+
+        '<rect x="'+padL+'" y="'+padT+'" width="'+cw+'" height="'+(y(50)-padT)+'" fill="var(--red-f)" opacity=".07"/>';
+  [35,50,100].forEach(function(v){ g+='<line x1="'+padL+'" x2="'+(padL+cw)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--ink-3)" stroke-dasharray="3 4" opacity=".35"/><text x="'+(padL-6)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--ink-3)" '+FONT+'>'+v+'%</text>'; });
+  var maxRev=Math.max.apply(null, S2.map(function(d){ return d.rev; }).concat([1])), bw=Math.max(cw/S2.length*.45, 4);
+  S2.forEach(function(d,i){ var bh=d.rev/maxRev*ch*.3;
+    g+='<rect x="'+(x(i)-bw/2)+'" y="'+(padT+ch-bh)+'" width="'+bw+'" height="'+bh+'" rx="3" fill="var(--choc)" opacity=".16"><title>'+d.d+' revenue '+money(d.rev)+', '+d.orders+' orders</title></rect>'; });
+  for(var k=1;k<pts.length;k++){ var a=pts[k-1], b=pts[k]; if(b.i-a.i>1) continue;
+    g+='<line x1="'+x(a.i)+'" y1="'+y(a.v)+'" x2="'+x(b.i)+'" y2="'+y(b.v)+'" stroke="'+ZC[zoneOf((a.v+b.v)/2)]+'" stroke-width="3" stroke-linecap="round"/>'; }
+  pts.forEach(function(p){ g+='<circle cx="'+x(p.i)+'" cy="'+y(p.v)+'" r="4" fill="'+ZC[zoneOf(p.v)]+'" stroke="var(--card)" stroke-width="1.6"><title>'+S2[p.i].d+' rolling 3-day MER '+p.v.toFixed(1)+'%</title></circle>'; });
+  var last=pts[pts.length-1];
+  if(last) g+='<text x="'+(x(last.i))+'" y="'+(y(last.v)-10)+'" text-anchor="end" font-size="13" font-weight="600" fill="var(--'+zoneOf(last.v)+')" '+FONT+'>'+last.v.toFixed(1)+'%</text>';
+  else g+='<text x="'+(padL+cw/2)+'" y="'+(padT+ch/2)+'" text-anchor="middle" font-size="14" fill="var(--ink-3)" '+FONT+'>Waiting on Meta spend for these days</text>';
+  var every=W<500? 3 : 2;
+  S2.forEach(function(d,i){ if((S2.length-1-i)%every) return; var dt=parseDay(d.d);
+    g+='<text x="'+x(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" fill="var(--ink-3)" '+FONT+'>'+dt.getDate()+(i<every||dt.getDate()===1? ' '+MON[dt.getMonth()].slice(0,3):'')+'</text>'; });
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Rolling 3-day MER, last 14 days">'+g+'</svg>';
+}
+/* the dial: the 7-day MER, nothing more granular (v6) */
+function drawDial(){
+  var el=$('dial'); if(!el) return; var w=winStats(doneDays(),7), v=w.mer;
+  var ang=function(t){ return Math.PI*(1-Math.min(t,110)/110); }, cx=90, cy=84, R=66;
+  var arc=function(a,b,col){ var x1=cx+R*Math.cos(ang(a)), y1=cy-R*Math.sin(ang(a)), x2=cx+R*Math.cos(ang(b)), y2=cy-R*Math.sin(ang(b));
+    return '<path d="M '+x1+' '+y1+' A '+R+' '+R+' 0 0 1 '+x2+' '+y2+'" stroke="'+col+'" stroke-width="14" fill="none"/>'; };
+  var svg='<svg viewBox="0 0 180 100" aria-hidden="true">'+arc(0,35,'var(--green-f)')+arc(35,50,'var(--amber-f)')+arc(50,110,'var(--red-f)');
+  if(v!=null){ var nx=cx+(R-22)*Math.cos(ang(v)), ny=cy-(R-22)*Math.sin(ang(v)); svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>'; }
+  svg+='<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="var(--ink)"/></svg>';
+  el.innerHTML=svg+'<div><div class="big num'+(v==null?'':' tone-'+zoneOf(v))+'">'+(v==null? '–' : v.toFixed(1)+'%')+'</div><div class="l">7-day MER</div></div>';
 }
 
 /* ---------- STL: content ---------- */
@@ -836,10 +945,12 @@ var CICON={
   shoot:'<svg width="15" height="15" viewBox="0 0 16 16"><rect x="1.8" y="4.5" width="12.4" height="8.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8.7" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 4.5 6.5 3h3l1 1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
   task:'<svg width="15" height="15" viewBox="0 0 16 16"><path d="m4 8.5 2.5 2.5L12 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
-var CLABEL={post:'Instagram',tiktok:'TikTok',email:'Email',shoot:'Shoot',task:'Task'};
+CICON.story=CICON.post;
+var CLABEL={post:'Instagram',story:'Story',tiktok:'TikTok',email:'Email',shoot:'Shoot',task:'Task'};
 var MIC='<svg width="14" height="14" viewBox="0 0 14 14"><rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor"/><path d="M2.5 6.5a4.5 4.5 0 0 0 9 0M7 11v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 /* channel from the title: same three tests as Code.gs contentType() and snapshot.py; the page re-derives so an older script's label cannot disagree */
 function typeFor(i){
+  if(i.channel!==undefined && CLABEL[i.type]) return i.type;   /* a content-calendar row says its own channel */
   if(i.type==='email') return 'email';
   var t=String(i.title||'');
   if(/tiktok|tik tok/i.test(t)) return 'tiktok';
@@ -851,24 +962,33 @@ function hm12(t){ var m=/^(\d{1,2}):(\d{2})$/.exec(t||''); if(!m) return ''; var
 /* content to-dos: the Sheet's Todos tab (Board = content) when live, kept on the device in the preview */
 function getCTodos(){ var C=(D.stl&&D.stl.content)||{}; if(live()){ if(!D.contentTodos) D.contentTodos=(C.todos||[]).filter(function(t){ return !t.example; }); return D.contentTodos; } var l=store('ctodos'); if(!l){ l=(C.todos||[]).map(function(t,i){ t=Object.assign({},t); t.id=t.id||'c'+i; return t; }); store('ctodos',l); } return l; }
 function renderCWeek(){
-  var C=(D.stl&&D.stl.content)||{items:[],todos:[]}, n=now(), td=today0(), items=C.items||[], MAXD=6;
+  var C=(D.stl&&D.stl.content)||{items:[],todos:[]}, n=now(), td=today0(), items=C.items||[], start=addDays(td, S.coff*7), MAXD=PHONE.matches? 99 : 6;
+  $('cw-title').textContent = S.coff===0? 'This week' : S.coff===1? 'Next week' : S.coff===-1? 'Last week' : 'From '+start.getDate()+' '+MON[start.getMonth()].slice(0,3);
   var h='';
   for(var k=0;k<7;k++){
-    var d=addDays(td,k), ds=ymd(d), its=items.filter(function(i){return i.date===ds;});
-    its.sort(function(a,b){ return String(a.time||'').localeCompare(String(b.time||'')); });
-    var shown=its.length>MAXD? its.slice(0,MAXD-1) : its;
-    h+='<div class="cday'+(k===0?' is-today':'')+'"><div class="dh"><span>'+DOW[d.getDay()]+'</span><b>'+d.getDate()+'</b></div><div class="items">'+
-      (shown.map(function(i){ var ty=typeFor(i), past=k===0 && i.time && (new Date(ds+'T'+i.time+':00') < n), tm=(ty==='email'||ty==='shoot')&&i.time? hm12(i.time):'';
-        return '<div class="cchip ch-'+ty+(past?' past':'')+'"><span class="ct">'+CLABEL[ty]+'</span><span class="cx">'+esc(i.title)+'</span>'+(tm?'<span class="cm">'+esc(tm)+'</span>':'')+'</div>'; }).join('') || '<div class="wait" style="padding:2px 4px">Nothing planned</div>')+
-      (its.length>shown.length? '<div class="more">+'+(its.length-shown.length)+' more</div>':'')+'</div></div>';
+    var d=addDays(start,k), ds=ymd(d), isT=ds===ymd(td), its=items.filter(function(i){return i.date===ds;});
+    its.sort(function(a,b){ return ((a.time?0:1)-(b.time?0:1)) || String(a.time||'').localeCompare(String(b.time||'')); });   /* timed posts first, then stories and tasks */
+    var shown=(its.length>MAXD && !S.cexp[ds])? its.slice(0,MAXD-1) : its;
+    h+='<div class="cday'+(isT?' is-today':'')+'"><div class="dh"><span>'+DOW[d.getDay()]+'</span><b>'+d.getDate()+'</b></div><div class="items">'+
+      (shown.map(function(i){ var ty=typeFor(i), past=(d<td) || (isT && i.time && (new Date(ds+'T'+i.time+':00') < n));
+        var meta = i.channel!==undefined? (i.format||'') : ((ty==='email'||ty==='shoot')&&i.time? hm12(i.time):'');
+        var st = i.status && !/^(exists|done|posted|sent|live|scheduled)$/i.test(i.status)? i.status : '';
+        return '<div class="cchip ch-'+ty+(past?' past':'')+'" title="'+esc([i.product, i.notes].filter(Boolean).join(' · '))+'"><span class="ct">'+CLABEL[ty]+(i.ref?' · '+esc(i.ref):'')+'</span><span class="cx">'+esc(i.title)+'</span>'+(meta?'<span class="cm">'+esc(meta)+'</span>':'')+(st?'<span class="cs">'+esc(st)+'</span>':'')+'</div>'; }).join('') || '<div class="wait" style="padding:2px 4px">Nothing planned</div>')+
+      (its.length>shown.length? '<button class="more" data-cexp="'+ds+'">+'+(its.length-shown.length)+' more</button>':'')+'</div></div>';
   }
   $('c-week').innerHTML = h;
-  /* footnote: undated email drafts once, two names at most; a Klaviyo problem in one line; then the standing note */
-  var nodate=items.filter(function(i){ return !i.date && typeFor(i)==='email'; }), parts=[];
-  if(nodate.length){ var names=nodate.slice(0,2).map(function(i){ return i.title; }), rest=nodate.length-names.length;
-    parts.push('<b style="font-weight:600;color:var(--ink-2)">'+nodate.length+' email draft'+(nodate.length===1?'':'s')+' with no send date</b>: '+esc(names.join(', '))+(rest>0?' and '+rest+' more':'')); }
-  var ki=statusInfo(['klaviyo']);
-  if(ki) parts.push('<span'+(ki.old?' style="color:var(--amber)"':'')+' title="'+esc(ki.raw)+'">'+esc(ki.text)+'</span>');
+  var parts=[];
+  if(C.source==='sheet'){
+    var nod=items.filter(function(i){ return !i.date; }).length;
+    if(nod) parts.push('<b style="font-weight:600;color:var(--ink-2)">'+nod+' row'+(nod===1?'':'s')+' in the Content tab with no readable date</b>');
+  } else {
+    /* old sources: undated email drafts once, two names at most; a Klaviyo problem in one line */
+    var nodate=items.filter(function(i){ return !i.date && typeFor(i)==='email'; });
+    if(nodate.length){ var names=nodate.slice(0,2).map(function(i){ return i.title; }), rest=nodate.length-names.length;
+      parts.push('<b style="font-weight:600;color:var(--ink-2)">'+nodate.length+' email draft'+(nodate.length===1?'':'s')+' with no send date</b>: '+esc(names.join(', '))+(rest>0?' and '+rest+' more':'')); }
+    var ki=statusInfo(['klaviyo']);
+    if(ki) parts.push('<span'+(ki.old?' style="color:var(--amber)"':'')+' title="'+esc(ki.raw)+'">'+esc(ki.text)+'</span>');
+  }
   if(C.note) parts.push(esc(C.note));
   $('c-note').innerHTML = parts.join('<br>');
 }
@@ -885,22 +1005,26 @@ function renderCTodos(){
 }
 
 /* ---------- STL: ads ---------- */
+/* each live ad set as the STL dashboard v6 shows it: last 3 complete days in full, then a 7-day line. No "yesterday" window. */
+function x2(v){ return v==null? '–' : Number(v).toFixed(2); }
+function kn(v){ return v==null? '–' : v>=1000? (v/1000).toFixed(1)+'k' : String(v); }
 function renderAdsTable(){
-  var A=(D.stl&&D.stl.ads)||{}; setPressed('[data-aw]','data-aw',S.aw);
-  var sets=(A.adsets||[]), w='w'+S.aw;
-  var cols=[['Spend','spend',function(v){return money(v);}],['Purch.','purchases',function(v){return v==null?'–':v;}],['CPA','cpa',function(v){return money(v);}],['ROAS','roas',function(v){return v==null?'–':v.toFixed(2)+'×';}],['Reach','reach',function(v){return v==null?'–':(v>=1000?(v/1000).toFixed(1)+'k':v);}],['Freq','frequency',function(v){return v==null?'–':v.toFixed(2);}],['Hook','hook',function(v){return v==null?'–':(v*100).toFixed(0)+'%';}],['ATC','atc',function(v){return v==null?'–':v;}],['Value','value',function(v){return kfmt(v);}]];
-  if(!sets.length){ $('a-table').innerHTML='<div class="wait" style="font-size:16px;padding:10px 0">Waiting on the daily post from the Meta buyer</div>'; }
-  else {
-    var rows='', lastMk='';
-    if(A.example) rows+='<tr><td colspan="'+(cols.length+1)+'" style="border:0;padding:0 0 8px"><span class="example">Example</span></td></tr>';
-    sets.forEach(function(s){
-      var m=s[w]||{};
-      if(s.market!==lastMk){ rows+='<tr class="mk"><td colspan="'+(cols.length+1)+'"><span class="eyebrow">'+esc(s.market)+'</span></td></tr>'; lastMk=s.market; }
-      rows+='<tr><td class="nm"><i class="dot" style="background:var(--'+(s.funnel==='MOF'?'sophie':s.funnel==='TOM'?'both':'chris')+')"></i>'+esc(s.name)+'<small>'+esc([s.funnel, s.budget? money(s.budget)+'/day':''].filter(Boolean).join(' · '))+'</small></td>'+
-        cols.map(function(c){ var tone=(m.tones||{})[c[1]]; return '<td class="num'+(tone?' tone-'+tone:'')+'">'+c[2](m[c[1]])+'</td>'; }).join('')+'</tr>';
-    });
-    $('a-table').innerHTML='<table class="adtable"><thead><tr><th>Ad set</th>'+cols.map(function(c){return '<th>'+c[0]+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>'+(S.aw==='1'?'':'<div class="faint" style="font-size:12px;margin-top:10px">Reach over several days is the peak day (daily reach does not add up), so Freq is a floor. Attribution 7-day click, 1-day view.</div>')+(A.note?'<div class="faint" style="font-size:12px;margin-top:6px">'+esc(A.note)+'</div>':'')+(A.asAt?'<div class="faint" style="font-size:12px;margin-top:6px">Posted '+esc(String(A.asAt).slice(0,16).replace('T',' '))+'</div>':'');
-  }
+  var A=(D.stl&&D.stl.ads)||{}, sets=(A.adsets||[]).filter(function(s){ return String(s.market||'').toUpperCase()!=='US' && s.w3; });
+  $('a-sub').textContent = [A.campaign, A.win3? '3 days '+spanLabel(A.win3.from, A.win3.to) : ''].filter(Boolean).join(' · ');
+  if(!sets.length){ $('a-sets').innerHTML='<div class="wait" style="font-size:16px;padding:10px 0">No live ad sets posted yet. They land here from the Meta buyer’s daily post to the AdSets tab.</div>'; return; }
+  var g=function(l,v){ return '<div class="ag"><i>'+l+'</i><b class="num">'+v+'</b></div>'; };
+  $('a-sets').innerHTML = sets.map(function(s){
+    var d=s.w3||{}, w=s.w7||{}, live=[];
+    if(s.liveSince) live.push('live since '+shortDay(s.liveSince)+(s.sinceKnown?'':' (first day posted)'));
+    if(d.days!=null && d.days<3) live.push(d.days+' day'+(d.days===1?'':'s')+' of data');
+    return '<div class="aset"><div class="ah"><span class="an">'+esc(s.name)+'</span>'+(s.budget?'<span class="abud">'+money(s.budget)+'/day</span>':'')+'</div>'+
+      (live.length?'<div class="alive">'+esc(live.join(' · '))+'</div>':'')+
+      '<div class="agrid">'+g('Spent',money(d.spend))+g('Sales',d.purchases==null?'–':d.purchases)+g('CPA',money(d.cpa))+g('ROAS',x2(d.roas))+g('Hook',d.hook==null?'–':(d.hook*100).toFixed(1)+'%')+
+        g('ATC',d.atc==null?'–':d.atc)+g('$/ATC',money(d.cpatc))+g('Reach',kn(d.reach))+g('Freq',x2(d.frequency))+g('CPM',money(d.cpm,2))+'</div>'+
+      '<div class="a7"><b>7 days</b>'+money(w.spend)+' · '+(w.purchases==null?'–':w.purchases)+(w.purchases===1?' sale':' sales')+' · CPA '+money(w.cpa)+' · ROAS '+x2(w.roas)+'</div></div>';
+  }).join('') +
+  '<div class="faint" style="font-size:12px;margin-top:4px">Reach over several days is the peak day (daily reach does not add up), so Freq is a floor. Attribution 7-day click, 1-day view.</div>'+
+  (A.asAt?'<div class="faint" style="font-size:12px;margin-top:6px">Posted '+esc(String(A.asAt).slice(0,16).replace('T',' '))+'</div>':'');
 }
 function renderAdsEmail(){
   var A=(D.stl&&D.stl.ads)||{}, K=A.klaviyo||{};
@@ -909,7 +1033,37 @@ function renderAdsEmail(){
 }
 function renderAdsGoogle(){
   var A=(D.stl&&D.stl.ads)||{}, G=A.google||{};
-  $('a-google').innerHTML = G.connected? '<div class="mini"><div><div class="big num">'+money(G.spend1)+'</div><div class="l">Yesterday</div></div><div><div class="big num">'+money(G.spend7)+'</div><div class="l">7 days</div></div></div>' : '<div class="empty">Not connected yet. Daily spend lands here once the Google Ads script is in.</div>';
+  $('a-google').innerHTML = G.connected? '<div class="mini"><div><div class="big num">'+money(G.spend3)+'</div><div class="l">3 days</div></div><div><div class="big num">'+money(G.spend7)+'</div><div class="l">7 days</div></div></div>' : '<div class="empty">Not connected yet. Daily spend lands here once the Google Ads script is in.</div>';
+}
+
+/* ---------- STL: orders ---------- */
+/* what sold as product photos with sizes (last 3 days, exchanges and cancellations left out), then every order. Same feed as the workbench. */
+var ADMIN='https://admin.shopify.com/store/c83a48/orders/';
+function imgW(u,w){ return u? u+(u.indexOf('?')>-1?'&':'?')+'width='+w : ''; }
+function initials(t){ return String(t||'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase(); }
+function orderRow(x, late){
+  var it=x.items||[], first=it.filter(function(i){ return i.image; })[0], when=new Date(x.at);
+  var tags=(late?'<span class="otag late">'+x.ageDays+' days, not shipped</span>':'')+(x.exchange?'<span class="otag">Exchange</span>':'')+(x.cancelled?'<span class="otag">Cancelled</span>':'');
+  var where=[x.city, x.region].filter(Boolean).join(' ')+(x.country && x.country!=='AU'? ', '+x.country : '');
+  return '<a class="orow" href="'+ADMIN+esc(x.id)+'" target="_blank" rel="noopener"><div class="thumb"'+(first?' style="background-image:url(\''+esc(imgW(first.image,120))+'\')"':'')+'></div>'+
+    '<div style="min-width:0"><div class="ot">'+esc(where||x.name)+tags+'</div><div class="oi">'+esc(it.map(function(i){ return String(i.title).replace(/\s+-\s+/,' · ')+(i.size?', '+i.size:'')+(i.qty>1?' ×'+i.qty:''); }).join(' + '))+'</div></div>'+
+    '<div class="ov num">'+money(x.total,0)+'<small>'+esc(whenLabel(when))+'</small></div></a>';
+}
+function renderOrders(){
+  var o=D.stl&&D.stl.orders;
+  if(!o){ $('o-sold').innerHTML='<div class="wait" style="font-size:16px;padding:10px 0">Orders arrive here once the Sheet script is re-pasted.</div>'; $('o-list').innerHTML=''; $('o-sub').textContent=''; $('o-count').textContent=''; return; }
+  var sold=o.sold||[], recent=o.recent||[], real=recent.filter(function(x){ return !x.exchange && !x.cancelled; });
+  $('o-sub').textContent='last '+(o.recentDays||3)+' days'+(o.last24h!=null? ' · '+o.last24h+' in 24 h' : '');
+  $('o-sold').innerHTML = sold.length? '<div class="sold">'+sold.map(function(s){
+      var sizes=Object.keys(s.sizes||{}).filter(Boolean).map(function(z){ return s.sizes[z]>1? z+' ×'+s.sizes[z] : z; }).join(' · ');
+      return '<div class="sitem"><div class="ph"'+(s.image?' style="background-image:url(\''+esc(imgW(s.image,360))+'\')"':'')+'>'+(s.image?'':'<span class="ini">'+esc(initials(s.title))+'</span>')+'<b class="num">'+s.qty+'</b></div><div class="t">'+esc(String(s.title).replace(/\s+-\s+/,' · '))+'</div><div class="z">'+esc(sizes)+'</div></div>';
+    }).join('')+'</div>' : '<div class="empty">No orders in the last '+(o.recentDays||3)+' days.</div>';
+  $('o-count').textContent = real.length+' order'+(real.length===1?'':'s')+', '+money(real.reduce(function(a,x){ return a+(x.total||0); },0));
+  var h='';
+  if((o.stuck||[]).length){ h+='<div class="osub" style="margin-top:0"><span>Not shipped after '+o.stuckDays+' days</span><span>'+o.stuck.length+'</span></div>'; o.stuck.forEach(function(x){ h+=orderRow(x,true); }); h+='<div class="osub"><span>Last '+(o.recentDays||3)+' days</span></div>'; }
+  h+= recent.map(function(x){ return orderRow(x,false); }).join('') || '<div class="empty">No orders yet.</div>';
+  if((o.refunds||[]).length){ h+='<div class="osub"><span>Refunds</span></div>'+o.refunds.map(function(r){ return '<div class="stat"><span>'+esc(r.name)+' · '+esc(whenLabel(new Date(r.at)))+'</span><span class="v num">−'+money(r.amount,2)+'</span></div>'; }).join(''); }
+  $('o-list').innerHTML=h;
 }
 
 /* ---------- STL: product ---------- */
@@ -1133,9 +1287,10 @@ function drawHealthChart(days, who){
 
 /* ---------- robustness: quiet status lines, never a blank card ---------- */
 /* status.<section>.error or .stale -> one line at the foot of each card that reads it; the raw text (it can hold URLs) only in the title */
-var SRC_NAME={calendar:'Calendar',weather:'Weather',lists:'Lists',sales:'Sales',adspend:'Ad spend',stock:'Stock',incoming:'Production',klaviyo:'Klaviyo',health:'Watch data',checkins:'Check-ins'};
+var SRC_NAME={orders:'Orders',content:'Content calendar',calendar:'Calendar',weather:'Weather',lists:'Lists',sales:'Sales',adspend:'Ad spend',stock:'Stock',incoming:'Production',klaviyo:'Klaviyo',health:'Watch data',checkins:'Check-ins'};
 var FEET=[['hcal',['calendar']],['h-today',['calendar']],['l-items',['lists']],
-  ['k-rev',['sales']],['k-mer',['sales','adspend']],['k-roas',['adspend']],['k-spend',['adspend']],['chart',['sales','adspend']],
+  ['k-rev',['sales']],['k-mer',['sales','adspend']],['k-roas',['adspend']],['k-spend',['adspend']],['k-orders',['sales']],['k-conv',['sales']],['chart',['sales','adspend']],
+  ['o-sold',['orders']],['o-list',['orders']],['a-sets',['adspend']],['c-week',['content']],
   ['a-email',['klaviyo']],['p-list',['stock']],['p-incoming',['incoming']],['h-chart',['health']],['h-night',['checkins']]];
 function whenLabel(g){ var n=now(); return ymd(g)===ymd(n)? hm(g) : (n-g)<6*864e5? DOW[g.getDay()]+' '+hm(g) : g.getDate()+' '+MON[g.getMonth()].slice(0,3); }
 function statusInfo(srcs){
@@ -1156,7 +1311,7 @@ function feet(){
 }
 /* a render that throws shows one serif line in its own card(s) and leaves every other card alone */
 var CANT='<div class="cant">Couldn\u2019t show this right now</div>';
-var TILE_LABEL={'k-rev':'Revenue','k-mer':'MER','k-roas':'Meta ROAS','k-spend':'Ad spend','ht-sleep':'Sleep','ht-move':'Move','ht-strength':'Strength','ht-food':'Drinks and food'};
+var TILE_LABEL={'k-rev':'Revenue','k-mer':'MER','k-roas':'ROAS','k-spend':'Meta spend','k-orders':'Orders','k-conv':'Conversion','ht-sleep':'Sleep','ht-move':'Move','ht-strength':'Strength','ht-food':'Drinks and food'};
 function failed(name, ids, e, clear){
   try{ console.error('Fridge Board: '+name+' could not render', e); }catch(x){}
   ids.forEach(function(id){ var el=$(id); if(el) el.innerHTML=(TILE_LABEL[id]? '<span class="eyebrow">'+TILE_LABEL[id]+'</span>' : '')+CANT; });
@@ -1165,12 +1320,13 @@ function failed(name, ids, e, clear){
 function guard(name, ids, fn, clear){ return function(){ try{ return fn.apply(this, arguments); }catch(e){ failed(name, ids, e, clear); } }; }
 renderHomeCal = guard('calendar', ['hcal'], renderHomeCal);
 renderLists = guard('lists', ['l-items'], renderLists);
-renderNumbers = guard('numbers', ['k-rev','k-mer','k-roas','k-spend'], renderNumbers);
+renderNumbers = guard('numbers', ['k-rev','k-mer','k-roas','k-spend','k-orders','k-conv'], renderNumbers);
+renderOrders = guard('orders', ['o-sold'], renderOrders, ['o-list']);
 drawChart = guard('chart', ['chart'], drawChart);
 renderCWeek = guard('content week', ['c-week'], renderCWeek, ['c-note']);
 renderCTodos = guard('content to-dos', ['c-todo'], renderCTodos);
 function renderContent(){ renderCWeek(); renderCTodos(); }
-renderAdsTable = guard('ad sets', ['a-table'], renderAdsTable);
+renderAdsTable = guard('ad sets', ['a-sets'], renderAdsTable);
 renderAdsEmail = guard('email', ['a-email'], renderAdsEmail);
 renderAdsGoogle = guard('google ads', ['a-google'], renderAdsGoogle);
 function renderAds(){ renderAdsTable(); renderAdsEmail(); renderAdsGoogle(); }
@@ -1190,7 +1346,10 @@ document.addEventListener('click', function(e){
   if(b.dataset.mode){ S.mode=b.dataset.mode; showMode(); }
   else if(b.dataset.tab){ S.tab=b.dataset.tab; showMode(); }
   else if(b.dataset.h){ S.who=b.dataset.h; showMode(); }
-  else if(b.dataset.aw){ S.aw=b.dataset.aw; renderAds(); }
+  else if(b.dataset.cexp){ S.cexp[b.dataset.cexp]=true; renderCWeek(); }
+  else if(b.id==='cw-prev'){ S.coff--; renderCWeek(); }
+  else if(b.id==='cw-next'){ S.coff++; renderCWeek(); }
+  else if(b.id==='cw-title'){ S.coff=0; renderCWeek(); }
   else if(b.dataset.hv){ S.hv=b.dataset.hv; S.hoff=0; renderHomeCal(); }
   else if(b.id==='hc-prev'){ S.hoff--; renderHomeCal(); }
   else if(b.id==='hc-next'){ S.hoff++; renderHomeCal(); }
