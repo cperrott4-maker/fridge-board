@@ -177,6 +177,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .sec{margin-top:22px}
 .sec .eyebrow{margin-bottom:8px;display:block}
 .mic{width:32px;height:32px;border-radius:50%;background:var(--ct,var(--fill));color:var(--cx,var(--ink-2));display:grid;place-items:center;flex:none;transition:transform .15s}
+#voice-msg{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:60;max-width:min(560px,calc(100vw - 32px));background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:14px;font-size:15px;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.18);text-align:center}
+.mic{-webkit-touch-callout:none;touch-action:manipulation}
 .mic.listening{background:var(--red-t);color:var(--red);animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 .logline{font-size:13.5px;padding:8px 0;border-top:1px solid var(--line);color:var(--ink-2)}
@@ -288,6 +290,7 @@ button.more{text-align:left}
 .po .tt{font-size:15px;font-weight:600}
 .po .eta{font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .po .sub{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.pre{display:inline-block;font-size:11.5px;font-weight:600;color:var(--sophie-x,var(--ink));background:var(--sophie-t,var(--fill));border-radius:6px;padding:1px 7px;margin-right:4px}
 .stages{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px}
 .stages i{height:4px;border-radius:2px;background:var(--fill)}
 .stages i.on{background:var(--chris)}
@@ -300,11 +303,28 @@ button.more{text-align:left}
 .aset .an{font-weight:600;font-size:15.5px;min-width:0;overflow-wrap:anywhere}
 .aset .abud{flex:none;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--fill);border-radius:8px;padding:3px 8px}
 .aset .alive{font-size:12px;color:var(--ink-3);margin-top:2px}
-.agrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 8px;margin-top:12px}
-.ag i{display:block;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.ag b{display:block;font-size:17px;font-weight:600;margin-top:1px;white-space:nowrap}
-.a7{font-size:12.5px;color:var(--ink-2);margin-top:12px;padding-top:9px;border-top:1px solid var(--line)}
-.a7 b{font-weight:600;color:var(--ink);margin-right:4px}
+.aset .ah{width:100%;font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;align-items:center}
+.aset .an{flex:1}
+.aset .an .alive{display:block;font-weight:400}
+.chev{flex:none;width:10px;height:10px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);margin:0 4px 4px 6px;transition:transform .2s}
+.aset.open .chev{transform:rotate(-135deg);margin-bottom:-4px}
+.atw{overflow-x:auto;margin-top:10px;-webkit-overflow-scrolling:touch}
+.atab{width:100%;border-collapse:collapse;min-width:620px}
+.atab td,.atab th{padding:3px 4px;text-align:right;white-space:nowrap}
+.atab th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);width:62px}
+.atab .ahd td{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.atab .a3 td{font-size:17px;font-weight:600}
+.atab .a7r td{font-size:13.5px;color:var(--ink-2);border-top:1px solid var(--line)}
+.adet{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.adrow{display:flex;gap:12px;align-items:center;padding:6px 0}
+.adth{width:48px;height:60px;border-radius:8px;object-fit:cover;background:var(--fill);flex:none;display:block}
+.adn{min-width:0}.adt{font-size:14px;font-weight:600;overflow-wrap:anywhere}.ads{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.akey{float:right;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-2)}
+.akey i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 4px 0 10px;vertical-align:-1px}
+.k1,.agebars .b1{background:var(--chris)}.k2,.agebars .b2{background:var(--sophie)}
+.agerow{display:grid;grid-template-columns:52px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:4px 0}
+.agel{font-size:13px;font-weight:600}.agev{font-size:12.5px;color:var(--ink-2);text-align:right}
+.agebars{display:flex;flex-direction:column;gap:3px}.agebars i{display:block;height:7px;border-radius:4px;min-width:2px}
 
 /* orders: what sold as product photos, then the orders themselves */
 #stl-orders{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
@@ -346,6 +366,29 @@ button.more{text-align:left}
 .prog{position:relative;height:7px;border-radius:4px;background:var(--fill);margin-top:14px}
 .prog .pf{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c)}
 .prog.ok .pf{background:var(--green-f)}
+.wdots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:2px}
+.wd i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);box-sizing:border-box}
+.wd.hit i{background:var(--chris);border-color:var(--chris)}
+.wd.now i{border-color:var(--chris-x)}
+.wd.fut{opacity:.45}
+.wd b{font-size:10.5px;color:var(--ink-3);font-weight:600}.wd span{font-size:10.5px;color:var(--ink-2);min-height:13px}
+.gweek{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
+.gd{font:inherit;background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink);cursor:pointer;min-height:44px}
+.gd i{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);box-sizing:border-box;display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:700;color:var(--card)}
+.gd.on i{background:var(--chris);border-color:var(--chris)}
+.gd.now i{border-color:var(--chris-x)}
+.gd.rest i{border-style:dashed}
+.gd.fut{opacity:.5;cursor:default}
+.gd b{font-size:10.5px;color:var(--ink-3);font-weight:600}.gd span{font-size:9.5px;color:var(--ink-2);white-space:nowrap}
+.rehab{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--chris-t);margin-bottom:6px}
+.rtick{font:inherit;color:inherit;background:none;border:0;padding:0;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;min-height:44px}
+.rtick i{width:34px;height:34px;border-radius:10px;border:2px solid var(--chris);display:grid;place-items:center;font-style:normal;font-size:18px;font-weight:700;color:var(--card);flex:none}
+.rehab.on .rtick i{background:var(--chris)}
+.rtick b{display:block;font-size:15px}.rtick small{display:block;font-size:12px;color:var(--ink-2)}
+.rstreak{font-size:24px;font-weight:600;text-align:right;line-height:1}.rstreak small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.wakebtn{font:inherit;font-size:15px;font-weight:600;display:flex;width:100%;justify-content:center;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 14px;margin-bottom:8px;min-height:48px;background:var(--chris-t);color:var(--chris-x);cursor:pointer;min-height:36px;-webkit-touch-callout:none}
+.wakebtn.listening{background:var(--red-t);color:var(--red);animation:pulse 1s ease-in-out infinite}
 .ht .second{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .ht .second .v{font-size:17px;font-weight:600}
 .ht .second .v.shift{color:var(--ink-3);font-size:14px}
@@ -472,7 +515,7 @@ html.dimmed,html.dimmed body{background:#15171E}
   .chartp{grid-column:1 / -1;min-height:0}
   .merbox{flex-direction:column;gap:6px} .merbox .chart{min-height:220px;flex:none;height:220px}
   .dial{width:auto;flex-direction:row;gap:14px;justify-content:flex-start;text-align:left} .dial svg{width:130px}
-  .agrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 6px} .ag b{font-size:14px} .ag i{font-size:9.5px;letter-spacing:.04em}
+  .agerow{grid-template-columns:44px minmax(0,1fr) 110px}
   .aset{padding:12px}
   .sold{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .cweek{grid-template-columns:1fr;overflow:visible}
@@ -622,7 +665,7 @@ html.dimmed,html.dimmed body{background:#15171E}
   <!-- STL PRODUCT -->
   <main class="view" id="stl-product" hidden>
     <section class="card">
-      <div class="ch"><span class="eyebrow">Stock</span><span class="faint" style="font-size:12px">bar = days of stock at the last month's pace · line = restock time</span></div>
+      <div class="ch"><span class="eyebrow">Stock</span><span class="faint" style="font-size:12px">bar = days of stock at the selling pace with ads on · line = restock time</span></div>
       <div class="sum" id="p-summary"></div>
       <div class="scroll" id="p-list" style="flex:1"></div>
     </section>
@@ -643,6 +686,7 @@ html.dimmed,html.dimmed body{background:#15171E}
     <section class="card" style="grid-column:span 2"><div class="ch"><span class="eyebrow">Last 7 days</span><div class="legend"><span><i class="sw" id="h-sw"></i>Hours asleep</span><span class="faint">steps under each day</span></div></div><div class="chart" id="h-chart"></div></section>
   </main>
 
+  <div id="voice-msg" role="status" hidden></div>
   <div id="setup" hidden><form class="card" id="setup-form"><h1>Fridge Board</h1><p>One-time setup. Paste the board's address and key from the Google Sheet script. They stay on this device.</p><input id="su-api" placeholder="Web app address (ends in /exec)" autocomplete="off" autocapitalize="off" spellcheck="false"><input id="su-key" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="err" id="su-err"></div><button class="btn" type="submit">Connect</button></form></div>
   <div id="dim" hidden><div class="dim-t num" id="dim-clock"></div><div class="dim-d" id="dim-date"></div><div class="dim-w" id="dim-wx"></div><div class="dim-s" id="dim-st" hidden></div><div class="dim-n" id="dim-next"></div><div class="dim-q"><span class="qtx" id="dim-quote"></span><span class="qb" id="dim-quote-by"></span></div></div>
 </div>
@@ -691,7 +735,7 @@ function eventsOn(day){
 var KIND_LABEL={shift:'Shift',trip:'Trip',health:'Training',party:'Social',birthday:'Birthday',holiday:'Public holiday'};
 
 /* ---------- state ---------- */
-var S = { mode:'home', tab:'numbers', hv:'week', hoff:0, list:'todo', addWho:'both', cAddWho:'sophie', who:'chris', coff:0, cexp:{} };
+var S = { mode:'home', tab:'numbers', hv:'month', hoff:0, list:'todo', addWho:'both', cAddWho:'sophie', who:'chris', coff:0, cexp:{} };
 function showMode(){
   setPressed('[data-mode]','data-mode',S.mode); setPressed('[data-tab]','data-tab',S.tab); setPressed('[data-h]','data-h',S.who);
   $('stl-tabs').hidden = S.mode!=='stl'; $('h-tabs').hidden = S.mode!=='health';
@@ -1014,19 +1058,44 @@ function renderAdsTable(){
   var A=(D.stl&&D.stl.ads)||{}, sets=(A.adsets||[]).filter(function(s){ return String(s.market||'').toUpperCase()!=='US' && s.w3; });
   $('a-sub').textContent = [A.campaign, A.win3? '3 days '+spanLabel(A.win3.from, A.win3.to) : ''].filter(Boolean).join(' · ');
   if(!sets.length){ $('a-sets').innerHTML='<div class="wait" style="font-size:16px;padding:10px 0">No live ad sets posted yet. They land here from the Meta buyer’s daily post to the AdSets tab.</div>'; return; }
-  var g=function(l,v){ return '<div class="ag"><i>'+l+'</i><b class="num">'+v+'</b></div>'; };
+  /* Chris's order, left to right (23 Oct 2026) */
+  var COLS=[['Sales',function(d){ return d.purchases==null?'–':d.purchases; }],['CPA',function(d){ return money(d.cpa); }],['Spent',function(d){ return money(d.spend); }],
+    ['ROAS',function(d){ return x2(d.roas); }],['Reach',function(d){ return kn(d.reach); }],['Freq',function(d){ return x2(d.frequency); }],
+    ['Hook',function(d){ return d.hook==null?'–':(d.hook*100).toFixed(0)+'%'; }],['CPM',function(d){ return money(d.cpm); }],
+    ['ATC',function(d){ return d.atc==null?'–':d.atc; }],['$/ATC',function(d){ return money(d.cpatc); }]];
+  var row=function(lab,d,cls){ return '<tr class="'+cls+'"><th>'+lab+'</th>'+COLS.map(function(c){ return '<td class="num">'+c[1](d||{})+'</td>'; }).join('')+'</tr>'; };
+  var head='<tr class="ahd"><th></th>'+COLS.map(function(c){ return '<td>'+c[0]+'</td>'; }).join('')+'</tr>';
+  S.aopen=S.aopen||{};
   $('a-sets').innerHTML = sets.map(function(s){
-    var d=s.w3||{}, w=s.w7||{}, live=[];
-    if(s.liveSince) live.push('live since '+shortDay(s.liveSince)+(s.sinceKnown?'':' (first day posted)'));
-    if(d.days!=null && d.days<3) live.push(d.days+' day'+(d.days===1?'':'s')+' of data');
-    return '<div class="aset"><div class="ah"><span class="an">'+esc(s.name)+'</span>'+(s.budget?'<span class="abud">'+money(s.budget)+'/day</span>':'')+'</div>'+
-      (live.length?'<div class="alive">'+esc(live.join(' · '))+'</div>':'')+
-      '<div class="agrid">'+g('Spent',money(d.spend))+g('Sales',d.purchases==null?'–':d.purchases)+g('CPA',money(d.cpa))+g('ROAS',x2(d.roas))+g('Hook',d.hook==null?'–':(d.hook*100).toFixed(1)+'%')+
-        g('ATC',d.atc==null?'–':d.atc)+g('$/ATC',money(d.cpatc))+g('Reach',kn(d.reach))+g('Freq',x2(d.frequency))+g('CPM',money(d.cpm,2))+'</div>'+
-      '<div class="a7"><b>7 days</b>'+money(w.spend)+' · '+(w.purchases==null?'–':w.purchases)+(w.purchases===1?' sale':' sales')+' · CPA '+money(w.cpa)+' · ROAS '+x2(w.roas)+'</div></div>';
+    var parts=String(s.name||'').split('..'), title=parts[0], tags=parts.slice(1).filter(function(t){ return t && !/^B\d+$/.test(t) && t!=='AU'; }), live=[], open=!!S.aopen[s.id];
+    if(s.liveSince) live.push('live since '+shortDay(s.liveSince));
+    if(s.w3 && s.w3.days!=null && s.w3.days<3) live.push(s.w3.days+' day'+(s.w3.days===1?'':'s')+' of data');
+    return '<div class="aset'+(open?' open':'')+'"><button type="button" class="ah" data-aset="'+esc(s.id)+'" aria-expanded="'+open+'"><span class="an">'+esc(title)+
+      (tags.length||live.length?'<span class="alive">'+esc(tags.concat(live).join(' · '))+'</span>':'')+'</span>'+
+      (s.budget?'<span class="abud">'+money(s.budget)+'/day</span>':'')+'<span class="chev" aria-hidden="true"></span></button>'+
+      '<div class="atw"><table class="atab">'+head+row('3 days',s.w3,'a3')+row('7 days',s.w7,'a7r')+'</table></div>'+
+      (open? adsetDetail(s) : '')+'</div>';
   }).join('') +
-  '<div class="faint" style="font-size:12px;margin-top:4px">Reach over several days is the peak day (daily reach does not add up), so Freq is a floor. Attribution 7-day click, 1-day view.</div>'+
+  '<div class="faint" style="font-size:12px;margin-top:4px">Tap an ad set to see its ads and ages. Reach over several days is the peak day, so Freq is a floor. 7-day click, 1-day view.</div>'+
   (A.asAt?'<div class="faint" style="font-size:12px;margin-top:6px">Posted '+esc(String(A.asAt).slice(0,16).replace('T',' '))+'</div>':'');
+}
+/* the drop-down: each ad with its thumbnail, then who it is working for by age */
+function adsetDetail(s){
+  var ads=(s.ads||[]).slice().sort(function(a,b){ return ((b.w3||{}).spend||0)-((a.w3||{}).spend||0); }), ages=s.ages||[], h='<div class="adet">';
+  h+='<div class="eyebrow" style="margin:4px 0 8px">Ads, last 3 days</div>';
+  h+= ads.length? ads.map(function(a){ var d=a.w3||{};
+      return '<div class="adrow">'+(a.thumb?'<img class="adth" src="'+esc(a.thumb)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="adth"></span>')+
+        '<div class="adn"><div class="adt">'+esc(a.name||'')+'</div><div class="ads">'+(d.purchases==null?'–':d.purchases)+(d.purchases===1?' sale':' sales')+' · '+money(d.spend)+' spent · CPA '+money(d.cpa)+' · ROAS '+x2(d.roas)+' · hook '+(d.hook==null?'–':(d.hook*100).toFixed(0)+'%')+'</div></div></div>'; }).join('')
+    : '<div class="wait">The ads inside this set arrive once the Meta buyer posts them.</div>';
+  h+='<div class="eyebrow" style="margin:14px 0 8px">By age, last 7 days <span class="akey"><i class="k1"></i>share of spend <i class="k2"></i>share of sales</span></div>';
+  if(ages.length){
+    var ts=0, tp=0; ages.forEach(function(g){ ts+=g.spend||0; tp+=g.purchases||0; });
+    h+=ages.map(function(g){ var ps=ts? (g.spend||0)/ts*100 : 0, pp=tp? (g.purchases||0)/tp*100 : 0;
+      return '<div class="agerow"><span class="agel">'+esc(g.age)+'</span><div class="agebars"><i class="b1" style="width:'+ps.toFixed(1)+'%"></i><i class="b2" style="width:'+pp.toFixed(1)+'%"></i></div>'+
+        '<span class="agev num">'+(g.purchases||0)+(g.purchases===1?' sale':' sales')+(g.purchases? ' · CPA '+money((g.spend||0)/g.purchases) : '')+'</span></div>'; }).join('');
+    h+='<div class="faint" style="font-size:12px;margin-top:6px">A sales bar longer than its spend bar means that age is buying more than its share.</div>';
+  } else h+='<div class="wait">Age breakdown arrives once the Meta buyer posts it.</div>';
+  return h+'</div>';
 }
 function renderAdsEmail(){
   var A=(D.stl&&D.stl.ads)||{}, K=A.klaviyo||{};
@@ -1075,12 +1144,15 @@ function classify(){
   var live=[], soldOut=[], quiet=0, R=(D.stl&&D.stl.rules)||{minSold90:5,redBuffer:14,amberBuffer:90};
   rows.forEach(function(p){
     if(p.inventory_total<=0){ if(p.units_sold_180d>=20) soldOut.push(p); return; }
-    if(p.units_sold_90d < R.minSold90){ quiet++; return; }
-    var rate = p.units_sold_28d/28; if(rate<=0) rate=p.units_sold_90d/90;
-    var cover = rate>0? p.inventory_total/rate : 999, lead=leadFor(p.style_family);
-    var lvl = cover <= lead+R.redBuffer? 'red' : cover <= lead+R.amberBuffer? 'amber':'green';
-    if(lvl!=='green' && p.incoming_units>0) lvl='coming';
+    if(p.units_sold_90d < R.minSold90 && (p.units_sold_180d||0) < 2*R.minSold90){ quiet++; return; }
+    /* Pace = the best of the last 4 weeks, 3 months and 6 months, so a quiet spell with the ads off can't make a
+       hero look like it has months of stock (Chris, 23 Oct 2026). Restocks take 60-70 days, so never plan on less than 65. */
+    var rate=Math.max(p.units_sold_28d/28, p.units_sold_90d/90, (p.units_sold_180d||0)/180);
+    var cover = rate>0? p.inventory_total/rate : 999, lead=Math.max(leadFor(p.style_family), 65);
     var core=['S','M','L'].filter(function(s){ return p.inventory_by_size && p.inventory_by_size[s]===0; });
+    var lvl = cover <= lead+R.redBuffer? 'red' : cover <= lead+R.amberBuffer? 'amber':'green';
+    if(lvl==='green' && (p.inventory_total<20 || core.length>=2)) lvl='amber';   /* a handful left, or the middle sizes gone, is never "plenty" */
+    if(lvl!=='green' && p.incoming_units>0) lvl='coming';
     live.push({p:p, rate:rate, cover:cover, lead:lead, lvl:lvl, gaps:core});
   });
   var order={red:0,amber:1,coming:2,green:3};
@@ -1098,15 +1170,16 @@ function renderStock(){
   c.live.forEach(function(x){
     if(x.lvl!==last){ h+='<div class="group-t lvl-'+x.lvl+'"><i class="dot" style="background:var(--sf,var(--s))"></i><span class="eyebrow">'+names[x.lvl]+'</span></div>'; last=x.lvl; }
     var p=x.p, pct=Math.min(x.cover,MAXD)/MAXD*100, lp=Math.min(x.lead,MAXD)/MAXD*100, perwk=Math.round(x.rate*7);
-    var inc = p.incoming_units? '<span style="color:var(--blue);font-weight:600">+'+p.incoming_units+' coming'+(p.incoming_eta?' ~'+parseDay(p.incoming_eta).getDate()+' '+MON[parseDay(p.incoming_eta).getMonth()].slice(0,3):'')+'</span>' : '<span></span>';
+    var dm=function(d){ var x=parseDay(d); return x.getDate()+' '+MON[x.getMonth()].slice(0,3); };
+    var inc = p.incoming_units? '<span style="color:var(--blue);font-weight:600">+'+p.incoming_units+' coming'+(p.incoming_eta?' ~'+dm(p.incoming_eta):'')+'</span>' : '<span></span>';
     var name=p.title.replace(' - ',' · ').replace(/^Daisy Asymmetric Top/,'Daisy Asymmetric');
     h+='<div class="srow lvl-'+x.lvl+'"><div class="thumb" style="background-image:url(\''+(p.thumb||p.image_url||'')+'\')"></div>'+
-      '<div style="min-width:0"><div class="sname">'+esc(name)+'</div><div class="smeta">'+p.inventory_total+' left · '+(p.units_sold_7d||0)+' sold last 7 days'+(x.gaps.length?' · <span class="gap">'+x.gaps.join(', ')+' out</span>':'')+'</div></div>'+
+      '<div style="min-width:0"><div class="sname">'+esc(name)+'</div><div class="smeta">'+(p.incoming_preorder?'<span class="pre">Preorder from '+dm(p.incoming_preorder)+'</span> ':'')+p.inventory_total+' left · ~'+Math.max(1,Math.round(x.rate*7))+' a week with ads on'+(x.gaps.length?' · <span class="gap">'+x.gaps.join(', ')+' out</span>':'')+'</div></div>'+
       '<div><div class="bar"><div class="fillb" style="width:'+pct+'%"></div><div class="lead" style="left:'+lp+'%"></div></div><div class="bar-cap"><span>'+x.lead+'-day restock</span>'+inc+'</div></div>'+
       '<div class="cover"><b class="num">'+(x.cover>=999?'–':x.cover>MAXD?'180+':Math.round(x.cover))+'</b><span>days left</span></div></div>'+sizesPanel(p);
   });
   if(c.soldOut.length) h+='<div class="group-t"><i class="dot" style="background:var(--ink-3)"></i><span class="eyebrow">Sold out, sold well</span></div><div class="soldout">'+c.soldOut.map(function(p){ return esc(p.title)+' <span class="faint">('+p.units_sold_180d+' sold'+(p.incoming_units?', +'+p.incoming_units+' coming':'')+')</span>'; }).join(' · ')+'</div>';
-  h+='<div class="faint" style="font-size:12px;margin-top:14px">'+c.quiet+' slow lines hidden. A line missing S, M or L sells under its real demand, so its days left reads long.</div>';
+  h+='<div class="faint" style="font-size:12px;margin-top:14px">'+c.quiet+' slow lines hidden. Under 20 left, or two of S, M and L gone, is never shown as plenty.</div>';
   $('p-list').innerHTML=h;
 }
 function renderIncoming(){
@@ -1115,7 +1188,7 @@ function renderIncoming(){
   var ih=list.map(function(po){
     var si=Math.max(0, ST.map(function(s){return s.toLowerCase();}).indexOf(String(po.stage||'').toLowerCase()));
     var img=po.thumb||po.image_url, ini=(po.style||'').split(' ').map(function(w){return w.charAt(0);}).join('').slice(0,2);
-    return '<div class="po"><div class="po-row"><div class="thumb'+(img?(po.image_src==='drive'?' sk':''):' ph')+'"'+(img?' style="background-image:url(\''+img+'\')"':' title="No picture yet: add one named \''+esc(po.style)+' - '+esc(po.colour||'')+'\' to PRODUCT REFERENCE IMAGES in Drive"')+'>'+(img?'':ini)+'</div><div style="min-width:0;flex:1"><div class="top-line"><div class="tt">'+esc(po.style)+(po.colour?' · '+esc(po.colour):'')+'</div><div class="eta num">'+esc(po.eta_label||'')+'</div></div>'+
+    return '<div class="po"><div class="po-row"><div class="thumb'+(img?(po.image_src==='drive'?' sk':''):' ph')+'"'+(img?' style="background-image:url(\''+img+'\')"':' title="No picture yet: add one named \''+esc(po.style)+' - '+esc(po.colour||'')+'\' to PRODUCT REFERENCE IMAGES in Drive"')+'>'+(img?'':ini)+'</div><div style="min-width:0;flex:1"><div class="top-line"><div class="tt">'+esc(po.style)+(po.colour?' · '+esc(po.colour):'')+'</div><div class="eta num">'+esc(po.eta_label||'')+'</div></div>'+(po.preorder_label?'<div class="sub"><span class="pre">'+esc(po.preorder_label)+'</span></div>':'')+
       '<div class="sub">'+esc([po.po, po.units?po.units+' pcs':'', po.stage_label||po.stage].filter(Boolean).join(' · '))+(po.conflict?' · <span style="color:var(--amber)">dates conflict</span>':'')+'</div>'+
       (po.lines&&po.lines.length>1?'<div class="sub">'+esc(po.lines.join(' · '))+'</div>':'')+
       '<div class="stages">'+ST.map(function(_,i){ return '<i class="'+(i<=si?'on':'')+'"></i>'; }).join('')+'</div><div class="stage-l">'+ST.map(function(s){return '<span>'+s+'</span>';}).join('')+'</div></div></div></div>';
@@ -1188,9 +1261,16 @@ function normaliseHealth(raw, who, base){
   /* last night: newest sleep record plus today's morning check-in */
   var allNights=dates.filter(function(s){ return sleepHours(byDate[s])!=null; }), ln=allNights[allNights.length-1], L={};
   if(ln){ var dd=byDate[ln], det=dd.sleep_analysis_detail||{}, b=clockOf(det.sleepStart), w=clockOf(det.sleepEnd);
-    L={hours:sleepHours(dd), bed:b&&b.label, wake:w&&w.label, awakenings:isNum(det.awakenings)? det.awakenings:null, date:ln}; }
+    L={hours:sleepHours(dd), bed:b&&b.label, wake:w&&w.label, awakenings:isNum(det.awakenings)? det.awakenings:null, date:ln, score:sleepScore(sleepHours(dd), det)}; }
   var todayRows=ci.filter(function(r){ return r.date===today; }), am=todayRows.filter(function(r){ return r.type==='morning'; })[0];
-  if(am){ L.quality=am.quality||am.sleep_quality||(isNum(am.sleep)? am.sleep+' / 5':null); L.rested=am.rested||null; L.phone=am.phone||am.phone_in_bed||null; }
+  if(am){ L.quality=am.quality||am.sleep_quality||(isNum(am.sleep)? am.sleep+' / 5':null); L.rested=am.rested||null; L.phone=am.phone||am.phone_in_bed||null; L.said=am.note||null; }
+  H.amRow=am||null;
+  W.scoreAvg = mean(nights.map(function(n){ return sleepScore(n.h, n.det); }).filter(isNum));
+  /* steps: a 10k goal, the streak of days in a row that hit it (yesterday backwards, today still counting) */
+  var goal=STEP_GOAL, streak=0;
+  for(var k=1;k<60;k++){ var sd=byDate[ymd(addDays(base,-k))]; if(sd && isNum(sd.step_count) && sd.step_count>=goal) streak++; else break; }
+  var td=byDate[today]; if(td && isNum(td.step_count) && td.step_count>=goal) streak++;
+  W.stepStreak=streak;
   H.lastNight=L;
   var pm=todayRows.filter(function(r){ return r.type==='night'; })[0];
   H.checkins={morning:!!am, night:!!pm};
@@ -1202,6 +1282,21 @@ function normaliseHealth(raw, who, base){
   return H;
 }
 function wait(t){ return '<span class="wait">'+t+'</span>'; }
+/* The board's own sleep score out of 100 (Apple's Sleep Score is not in the Health Auto Export feed):
+   50 for hours (full marks at 8h), 25 for deep + REM (full marks at 40% of the night), 15 for little time awake
+   (zero at 45 min), 10 for a bedtime before midnight (zero by 2am). */
+var STEP_GOAL=10000;
+function sleepScore(h, det){ if(!isNum(h)||h<=0) return null; det=det||{};
+  var dr=(isNum(det.deep)?det.deep:0)+(isNum(det.rem)?det.rem:0), aw=isNum(det.awake)?det.awake:0, b=clockOf(det.sleepStart), bh=b? (b.h<12? b.h+24 : b.h) : null;
+  var sc=50*Math.min(h/8,1) + (dr? 25*Math.min(dr/h/0.40,1) : 12) + 15*Math.max(0,1-aw/0.75) + (bh==null? 5 : 10*Math.max(0,Math.min(1,(26-bh)/2)));
+  return Math.round(sc); }
+/* gym week: Keith's three leg sessions plus two upper days, Thursday is run club (a default, editable as gymPlan in the Sheet's Settings) */
+var GYM_PLAN=['Legs','Upper','Legs','Run club','Upper','Legs',''], GYM_WORDS=/legs|upper|gym|full|push|pull|lower/i;
+function gymPlan(){ var g=D.healthPlan&&D.healthPlan.gym; if(Array.isArray(g)&&g.length===7) return g; return GYM_PLAN; }
+function habitsFor(who){ D.habits=D.habits||{}; return D.habits[who]=D.habits[who]||{}; }
+function habitOn(who, date, h){ var x=habitsFor(who)[date]; return !!(x&&x[h]); }
+function setHabit(who, date, h, on){ var H=habitsFor(who); H[date]=H[date]||{}; if(on) H[date][h]=true; else delete H[date][h]; renderHealth(); api({action:'habit.set', who:who, date:date, habit:h, done:on}); }
+function rehabList(){ var r=D.healthPlan&&D.healthPlan.rehab; if(Array.isArray(r)) return r; if(r) return String(r).split(/\n|;/).map(function(x){return x.trim();}).filter(Boolean); return null; }
 function syncLabel(H, base){
   if(!H.real) return '';
   if(!H.lastSync) return '<span class="syncl stale">No watch data yet</span>';
@@ -1223,15 +1318,24 @@ function renderHealth(){
   part(['ht-sleep'], function(){
   var sl=W.sleepAvg, spread=W.wakeSpread, nN=W.sleepNights;
   var sleepCap = !H.real? '7-night average · aim 7.5h on the watch' : nN? nN+' of 7 nights on the watch · aim 7.5h' : noSync? 'Nights land here once the watch is on' : 'Wear the watch tonight, first night lands tomorrow';
-  tile('ht-sleep','Sleep', sl!=null? sl.toFixed(1):'–','h', sleepCap, sl||0, 7.5, sl>=7.5,
-    [['Wake spread', inShift?'Shift':(spread!=null? Math.round(spread*60)+' min':wait('Needs two nights')), inShift],['Last night', H.lastNight&&H.lastNight.hours!=null? H.lastNight.hours.toFixed(1)+'h':wait(noSync?'No watch yet':'Wear it to bed')]], ex);
+  var Ln=H.lastNight||{}, sc=Ln.score;
+  if(sc!=null) tile('ht-sleep','Sleep score', sc,'/100', 'last night · hours, deep + REM, time awake, bedtime'+(W.scoreAvg!=null?' · week avg '+Math.round(W.scoreAvg):''), sc, 100, sc>=80,
+    [['Last night', Ln.hours!=null? Ln.hours.toFixed(1)+'h':'–'],['7-night avg', sl!=null? sl.toFixed(1)+'h':wait('Needs nights')]], ex);
+  else tile('ht-sleep','Sleep', sl!=null? sl.toFixed(1):'–','h', sleepCap, sl||0, 7.5, sl>=7.5,
+    [['Wake spread', inShift?'Shift':(spread!=null? Math.round(spread*60)+' min':wait('Needs two nights')), inShift],['Last night', Ln.hours!=null? Ln.hours.toFixed(1)+'h':wait(noSync?'No watch yet':'Wear it to bed')]], ex);
   });
   part(['ht-move'], function(){
-  var mv=W.aerobicMin||0, dr=(W.rhr!=null&&W.rhrBase!=null)? Math.round(W.rhr-W.rhrBase) : 0;
-  tile('ht-move','Move', noSync?'–':mv,' min', noSync? 'Minutes land here once the watch is on · aim 150' : 'aerobic minutes this week · aim 150 to 300', mv, 150, mv>=150,
-    [['Steps, 7-day avg', W.steps7d? Math.round(W.steps7d).toLocaleString():(inShift?'Shift':wait('No steps yet')), !W.steps7d&&inShift],['Resting HR', W.rhr? W.rhr+(W.rhrBase!=null? ' <span style="font-size:13px;color:'+(dr>5?'var(--amber)':'var(--ink-3)')+'">'+(dr>0?'+':'')+dr+'</span>':''):wait('From a watch night')]]);
+  var mv=W.aerobicMin||0, st=W.stepStreak||0;
+  tile('ht-move','Steps', noSync?'–':st,' day'+(st===1?'':'s'), noSync? 'Steps land here once the watch is on' : 'in a row over 10k · keep the run going', 0, 1, st>0,
+    [['Steps, 7-day avg', W.steps7d? Math.round(W.steps7d).toLocaleString():(inShift?'Shift':wait('No steps yet')), !W.steps7d&&inShift],['Active min this week', noSync?'–':mv+' <span style="font-size:13px;color:var(--ink-3)">/ 150</span>']]);
+  /* the week as seven dots: filled = 10k hit, the number under each is thousands of steps */
+  var mon=mondayOf(base), dots='';
+  for(var i=0;i<7;i++){ var d=addDays(mon,i), sd=(H.days||[]).filter(function(x){ return x.date===ymd(d); })[0], n=sd&&sd.steps, fut=d>base;
+    dots+='<div class="wd'+(n!=null&&n>=STEP_GOAL?' hit':'')+(fut?' fut':'')+(ymd(d)===ymd(base)?' now':'')+'"><i></i><b>'+DOW[d.getDay()].charAt(0)+'</b><span class="num">'+(n!=null? (n/1000).toFixed(0)+'k':'')+'</span></div>'; }
+  $('ht-move').querySelector('.prog').outerHTML='<div class="wdots">'+dots+'</div>';
   });
   part(['ht-strength'], function(){
+  if(who==='chris'){ gymTile(H, W, base); return; }
   var st=W.strengthDays||0, stT=T.strengthDays||2;
   var vo = W.vo2Trend==='up'?'<span style="color:var(--green)">↑ rising</span>':W.vo2Trend==='down'?'<span style="color:var(--amber)">↓ falling</span>':W.vo2Trend==='first'?'first reading':W.vo2Trend?'→ steady':wait('From a run or walk');
   var stCap = (W.strengthSource||!H.real)? 'this week · aim '+stT+(T.strengthNote?' · '+T.strengthNote:' or more') : 'Log a strength workout on the watch · aim '+stT;
@@ -1250,14 +1354,21 @@ function renderHealth(){
   var am=wait('Morning check-in');
   var rows=[['Asleep', L.hours!=null? L.hours.toFixed(1)+'h'+(L.bed&&L.wake? ' <span class="faint">'+L.bed+' to '+L.wake+'</span>':'')+old : wait(noSync?'No watch night yet':'Wear the watch to bed')],['Quality', L.quality||am],['Rested on waking', L.rested||am],['Awake overnight', L.awakenings!=null? L.awakenings+' time'+(L.awakenings===1?'':'s'):wait('Needs a watch night')],['Phone in bed', L.phone||am]];
   if(inShift) rows.unshift(['Shift block', 'counted per 24h']);
-  $('h-night').innerHTML = rows.map(function(r){ return '<div class="stat"><span class="l">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>'; }).join('');
+  if(L.said) rows.unshift(['You said', '<span style="font-weight:500">'+esc(L.said)+'</span>']);
+  $('h-night').innerHTML = '<button type="button" class="wakebtn" id="h-wake" data-wake="1">'+MIC+(L.said?'Say it again':'How did I sleep?')+'</button>'+rows.map(function(r){ return '<div class="stat"><span class="l">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>'; }).join('');
   });
   part(['h-today'], function(){
   var plan=[], gymToday=false; eventsOn(base).forEach(function(x){ if((x.kind==='health'||x.kind==='shift') && (x.who===who||x.who==='both')){ plan.push(evRow(x)); if(x.kind==='health'&&STRENGTH_RX.test(x.t)) gymToday=true; } });
   (H.todayPlan||[]).forEach(function(t){ plan.push('<div class="ev who-'+who+'"><div class="tm num">'+esc(t.when||'')+'</div><div><div class="tt"><i class="dot"></i>'+esc(t.title)+'</div>'+(t.sub?'<div class="sub">'+esc(t.sub)+'</div>':'')+'</div></div>'); });
   var inj=H.injuries||[], logs=store('health.log.'+who+'.'+ymd(base))||[], P=H.programme;
   var notes=[]; if(H.note) notes.push(H.note);
-  $('h-today').innerHTML = '<div class="tl">'+(plan.join('')||'<div class="empty">Nothing planned. A walk counts.</div>')+'</div>'+
+  var rh='';
+  if(who==='chris'){ var rdone=habitOn('chris',ymd(base),'rehab'), rs=0; for(var k=rdone?0:1;k<60;k++){ if(habitOn('chris',ymd(addDays(base,-k)),'rehab')) rs++; else break; }
+    var RL=rehabList();
+    rh='<div class="rehab'+(rdone?' on':'')+'"><button type="button" class="rtick" data-rehab="'+ymd(base)+'" aria-pressed="'+rdone+'"><i>'+(rdone?'✓':'')+'</i><span><b>Daily rehab</b><small>10 min · hamstring, knee, ankle</small></span></button>'+
+      '<div class="rstreak num">'+rs+'<small>day'+(rs===1?'':'s')+' in a row</small></div></div>'+
+      '<div class="faint" style="font-size:12.5px;margin:6px 0 2px">'+(RL? esc(RL.join(' · ')) : 'Single-leg calf raises and the rest of FitBot’s routine. Paste the routine into the Sheet (Settings, rehabRoutine) and it shows here.')+'</div>'; }
+  $('h-today').innerHTML = rh+'<div class="tl">'+(plan.join('')||'<div class="empty">Nothing planned. A walk counts.</div>')+'</div>'+
     (gymToday&&P&&P.exercises? '<div class="sec"><span class="eyebrow">Programme</span><div class="faint" style="font-size:12.5px;margin-top:4px">'+esc(P.exercises.join(' · '))+'</div></div>':'')+
     (function(){ var lines=logs.map(function(l){ return '<div class="logline"><b>'+esc(l.t)+'</b> · '+esc(l.text)+'</div>'; }), nn=H.nightNote, said=logs.map(function(l){ return l.text; }).join(' | ');
       if(nn && nn!==said && said.indexOf(nn)<0) lines.unshift('<div class="logline"><b>Night check-in</b> · '+esc(nn)+'</div>');
@@ -1266,6 +1377,19 @@ function renderHealth(){
     (notes.length?'<div class="faint" style="font-size:12px;margin-top:12px">'+esc(notes.join(' '))+'</div>':'');
   });
   part(['h-chart'], function(){ drawHealthChart(H.days||[], who); });
+}
+/* Chris's gym week: five sessions (Keith's three leg days plus two upper), tap a day to tick it. A watch strength workout ticks it too. */
+function gymTile(H, W, base){
+  var plan=gymPlan(), mon=mondayOf(base), done=0, cells='', target=plan.filter(function(p){ return GYM_WORDS.test(p); }).length||5;
+  var watch={}; (H.workouts||[]).forEach(function(w){ if(STRENGTH_RX.test(w.name||'') && w.start) watch[String(w.start).slice(0,10)]=1; });
+  for(var i=0;i<7;i++){ var d=addDays(mon,i), ds=ymd(d), on=habitOn('chris',ds,'gym')||!!watch[ds], fut=d>base, lab=plan[i]||'Rest';
+    if(on) done++;
+    cells+='<button type="button" class="gd'+(on?' on':'')+(fut?' fut':'')+(ds===ymd(base)?' now':'')+(GYM_WORDS.test(lab)?'':' rest')+'" data-gym="'+ds+'"'+(fut?' disabled':'')+' aria-pressed="'+on+'"><b>'+DOW[d.getDay()].charAt(0)+'</b><i>'+(on?'✓':'')+'</i><span>'+esc(lab)+'</span></button>'; }
+  var nx=H.nextStrength;
+  $('ht-strength').innerHTML='<div class="ch" style="margin-bottom:0"><span class="eyebrow">Gym this week</span></div><div class="big num">'+done+'<small>/ '+target+'</small></div>'+
+    '<div class="cap">'+(done>=target?'Week done. Nice.':done>=target-1?'One more and it’s a full week':'aim 4 to 5 · tap a day when it’s done')+'</div>'+
+    '<div class="gweek">'+cells+'</div>'+
+    '<div class="second"><div><div class="v num">'+esc(plan[(base.getDay()+6)%7]||'Rest')+'</div><div class="l">Today’s plan</div></div><div><div class="v num">'+(nx||'–')+'</div><div class="l">Next in calendar</div></div></div>';
 }
 function drawHealthChart(days, who){
   var box=$('h-chart'); if(!box.clientWidth||!days.length){ box.innerHTML=''; return; }
@@ -1348,6 +1472,15 @@ document.addEventListener('click', function(e){
   if(b.dataset.mode){ S.mode=b.dataset.mode; showMode(); }
   else if(b.dataset.tab){ S.tab=b.dataset.tab; showMode(); }
   else if(b.dataset.h){ S.who=b.dataset.h; showMode(); }
+  else if(b.dataset.gym){ setHabit('chris', b.dataset.gym, 'gym', !habitOn('chris', b.dataset.gym, 'gym')); }
+  else if(b.dataset.rehab){ setHabit('chris', b.dataset.rehab, 'rehab', !habitOn('chris', b.dataset.rehab, 'rehab')); }
+  else if(b.dataset.wake){ if(HOLD && Date.now()-HOLD.at>600 && !VOICE) return;
+    dictate(b, function(t){ var who=S.who, d=ymd(today0()), am=((D.checkins&&D.checkins[who])||[]).filter(function(r){ return r.date===d && r.type==='morning'; })[0]||{}, body={action:'checkin.morning', who:who, date:d, note:t};
+      /* the script upserts the whole row: carry the phone's morning answers across */
+      Object.keys(am).forEach(function(k){ if(['date','type','at','note'].indexOf(k)<0 && am[k]!=null && am[k]!=='') body[k]=am[k]; });
+      D.checkins=D.checkins||{}; var arr=D.checkins[who]=(D.checkins[who]||[]).filter(function(r){ return !(r.date===d && r.type==='morning'); }); arr.push(Object.assign({}, am, {date:d, type:'morning', note:t})); renderHealth();
+      api(body).then(function(r){ if(r) load(false); }); }); }
+  else if(b.dataset.aset){ S.aopen=S.aopen||{}; S.aopen[b.dataset.aset]=!S.aopen[b.dataset.aset]; renderAdsTable(); }
   else if(b.dataset.cexp){ S.cexp[b.dataset.cexp]=true; renderCWeek(); }
   else if(b.id==='cw-prev'){ S.coff--; renderCWeek(); }
   else if(b.id==='cw-next'){ S.coff++; renderCWeek(); }
@@ -1361,6 +1494,7 @@ document.addEventListener('click', function(e){
   else if(b.dataset.w){ S.addWho=b.dataset.w; setPressed('[data-w]','data-w',S.addWho); }
   else if(b.dataset.cw){ S.cAddWho=b.dataset.cw; setPressed('[data-cw]','data-cw',S.cAddWho); }
   else if(b.dataset.mic){
+    if(HOLD && Date.now()-HOLD.at>600 && !VOICE) return;
     if(b.dataset.mic==='meal-input'){ var inp=$('meal-input'); dictate(b, function(t){ inp.value=t; setMeal(t); }, inp); }
     else if(b.dataset.mic==='add-input'){ var ai=$('add-input'); dictate(b, function(t){ ai.value=t; $('add-form').requestSubmit ? $('add-form').requestSubmit() : $('add-form').dispatchEvent(new Event('submit',{cancelable:true})); }, ai); }
     else if(b.dataset.mic==='c-add-input'){ var ci=$('c-add-input'); dictate(b, function(t){ ci.value=t; $('c-add-form').requestSubmit ? $('c-add-form').requestSubmit() : $('c-add-form').dispatchEvent(new Event('submit',{cancelable:true})); }, ci); }
@@ -1398,17 +1532,40 @@ $('c-add-form').addEventListener('submit', function(e){
 function setMeal(t){ var d=ymd(today0()); store('meal.'+d, t); if(D.meals) D.meals[d]=t; api({action:'meal.set', date:d, text:t}); }
 $('meal-input').addEventListener('change', function(){ setMeal(this.value.trim()); });
 
-/* voice: Safari's speech recognition where it exists, otherwise the keyboard's own mic */
+/* voice: tap the mic to start, tap again (or let go after holding) to stop. Words show in the box as you speak.
+   Safari's recogniser is flaky in a Home Screen web app, so every failure says so plainly and opens the keyboard,
+   whose own mic key always works. */
+var VOICE=null;
+function say(msg){ var t=$('voice-msg'); if(!t) return; t.textContent=msg; t.hidden=false; clearTimeout(say.t); say.t=setTimeout(function(){ t.hidden=true; }, 4500); }
 function dictate(btn, onText, inputEl){
+  if(VOICE && VOICE.btn===btn){ VOICE.stop(); return; }
+  if(VOICE) VOICE.stop();
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ if(inputEl) inputEl.focus(); return; }
-  if(btn.classList.contains('listening')) return;
-  try{ var r=new SR(); r.lang='en-AU'; r.interimResults=false; r.maxAlternatives=1; btn.classList.add('listening');
-    r.onresult=function(e){ var t=e.results[0][0].transcript; if(t) onText(t.charAt(0).toUpperCase()+t.slice(1)); };
-    r.onerror=function(){ if(inputEl) inputEl.focus(); };
-    r.onend=function(){ btn.classList.remove('listening'); };
-    r.start(); }catch(e){ btn.classList.remove('listening'); if(inputEl) inputEl.focus(); }
+  var fallback=function(why){ btn.classList.remove('listening'); say(why); if(inputEl){ inputEl.focus(); } };
+  if(!SR){ fallback('Voice isn’t available here. Use the mic key on the keyboard.'); return; }
+  var r, heard='', base=inputEl? inputEl.value : '', done=false, failed=false;
+  try{ r=new SR(); }catch(e){ fallback('Voice isn’t available here. Use the mic key on the keyboard.'); return; }
+  r.lang='en-AU'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
+  var finish=function(){ if(done) return; done=true; btn.classList.remove('listening'); VOICE=null; clearTimeout(cap);
+    var t=heard.trim(); if(inputEl) inputEl.value=base;
+    if(t) onText(t.charAt(0).toUpperCase()+t.slice(1));
+    else if(!failed) say('Didn’t catch that. Tap the mic and try again.'); };
+  r.onresult=function(e){ var t=''; for(var i=0;i<e.results.length;i++) t+=e.results[i][0].transcript+' '; heard=t; if(inputEl) inputEl.value=(base? base+' ' : '')+t.trim(); };
+  r.onerror=function(e){ var c=e&&e.error;
+    if(c==='no-speech' || c==='aborted') return;
+    failed=true; done=true; btn.classList.remove('listening'); VOICE=null; clearTimeout(cap); if(inputEl) inputEl.value=base;
+    fallback(c==='not-allowed'||c==='service-not-allowed'? 'The iPad blocked the microphone here. Use the mic key on the keyboard, or allow it in Settings > Safari > Microphone.' : 'Voice stopped ('+(c||'error')+'). Use the mic key on the keyboard.'); };
+  r.onend=finish;
+  var cap=setTimeout(function(){ try{ r.stop(); }catch(e){} }, 30000); /* never listens for more than 30 seconds */
+  VOICE={ btn:btn, stop:function(){ try{ r.stop(); }catch(e){ finish(); } } };
+  btn.classList.add('listening');
+  try{ r.start(); say('Listening… tap the mic again when you’re done.'); }catch(e){ VOICE=null; clearTimeout(cap); fallback('Voice isn’t available here. Use the mic key on the keyboard.'); }
 }
+/* press and hold also works: let go to stop. A quick tap is handled by the click handler. */
+var HOLD=null;
+document.addEventListener('pointerdown', function(e){ var b=e.target.closest('button.mic,button.wakebtn'); if(!b) return; HOLD={b:b, at:Date.now()}; }, {passive:true});
+document.addEventListener('pointerup', function(){ if(HOLD && Date.now()-HOLD.at>600 && VOICE && VOICE.btn===HOLD.b) VOICE.stop(); HOLD=null; }, {passive:true});
+document.addEventListener('contextmenu', function(e){ if(e.target.closest('button.mic')) e.preventDefault(); });
 
 /* idle: dim to a clock after 2 minutes, and rest on Home */
 var idle, DIM_MS=120000;
@@ -1416,7 +1573,7 @@ function dimTick(){ var n=now(), td=today0(); $('dim-clock').textContent=hm(n).r
   var nx=eventsOn(td).filter(function(x){return !x.span && x.s>n;})[0], tmr=false; if(!nx){ nx=eventsOn(addDays(td,1)).filter(function(x){return !x.span;})[0]; tmr=true; }
   $('dim-next').textContent = nx? 'Next: '+nx.t+' · '+(tmr?'tomorrow ':'')+hm(nx.s) : '';
   var w=D.weather, wt=w&&w.current? wxText(w) : ''; $('dim-wx').innerHTML = wt? wxIcon(w.current.weather_code, isNight(n))+'<span>'+wt+'</span>' : ''; }
-function showDim(){ dimTick(); $('dim').hidden=false; document.documentElement.classList.add('dimmed'); S.mode='home'; S.hv='week'; S.hoff=0; renderHomeCal(); showMode(); }
+function showDim(){ dimTick(); $('dim').hidden=false; document.documentElement.classList.add('dimmed'); S.mode='home'; S.hv='month'; S.hoff=0; renderHomeCal(); showMode(); }
 function poke(){ clearTimeout(idle); $('dim').hidden=true; document.documentElement.classList.remove('dimmed'); if(!PHONE.matches) idle=setTimeout(showDim, DIM_MS); } /* a phone sleeps on its own, so it never dims to the clock */
 ['touchstart','mousedown','keydown'].forEach(function(t){ document.addEventListener(t, poke, {passive:true}); }); poke();
 setInterval(function(){ if(!$('dim').hidden) dimTick(); }, 20000);
