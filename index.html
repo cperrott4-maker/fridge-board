@@ -191,8 +191,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .todo.done .check{background:var(--cx,var(--c))}
 .todo .tx{font-size:15.5px;line-height:1.35;flex:1;min-width:0}
 .todo.done .tx{color:var(--ink-3);text-decoration:line-through}
+.todo .del{flex:none;position:relative;width:28px;height:28px;margin-top:-3px;border:0;border-radius:50%;background:transparent;color:var(--ink-3);display:grid;place-items:center;cursor:pointer}
+.todo .del::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px}
+.todo .del:active{background:var(--fill);color:var(--red)}
+.addbtn{flex:none;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--ink);color:var(--card);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .todo .w{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cx,var(--c));padding-top:4px}
 .add{display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.add{flex-wrap:wrap}form.add input{flex:1 1 100%}.add .pick{margin-left:auto}
 .add input{flex:1;min-width:0;min-height:44px;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 13px;border-radius:12px;border:0;background:var(--fill);color:var(--ink);outline:none;-webkit-user-select:text;user-select:text}
 .add .pick{display:flex;gap:8px}
 .add .pick button{width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:700;background:var(--ct);color:var(--cx,var(--c))}
@@ -600,7 +605,7 @@ html.dimmed,html.dimmed body{background:#15171E}
       </div>
       <div class="scroll" style="flex:1" id="l-items"></div>
       <form class="add" id="add-form">
-        <input id="add-input" placeholder="Add something" autocomplete="off" enterkeyhint="done"><button type="button" class="mic who-both" data-mic="add-input" aria-label="Say it"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor"/><path d="M2.5 6.5a4.5 4.5 0 0 0 9 0M7 11v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <input id="add-input" placeholder="Add something" autocomplete="off" enterkeyhint="done"><button type="button" class="mic who-both" data-mic="add-input" aria-label="Say it"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor"/><path d="M2.5 6.5a4.5 4.5 0 0 0 9 0M7 11v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button><button type="submit" class="addbtn">Add</button>
         <div class="pick" id="who-pick">
           <button type="button" class="who-chris" data-w="chris" aria-pressed="false" aria-label="Chris">C</button>
           <button type="button" class="who-sophie" data-w="sophie" aria-pressed="false" aria-label="Sophie">S</button>
@@ -642,7 +647,7 @@ html.dimmed,html.dimmed body{background:#15171E}
     </section>
     <section class="card"><div class="ch"><span class="eyebrow">To do</span><span class="faint" id="c-count" style="font-size:13px;white-space:nowrap"></span></div><div class="scroll" id="c-todo" style="flex:1"></div>
       <form class="add" id="c-add-form">
-        <input id="c-add-input" placeholder="Add a to-do" autocomplete="off" enterkeyhint="done"><button type="button" class="mic who-sophie" data-mic="c-add-input" aria-label="Say it"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor"/><path d="M2.5 6.5a4.5 4.5 0 0 0 9 0M7 11v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <input id="c-add-input" placeholder="Add a to-do" autocomplete="off" enterkeyhint="done"><button type="button" class="mic who-sophie" data-mic="c-add-input" aria-label="Say it"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor"/><path d="M2.5 6.5a4.5 4.5 0 0 0 9 0M7 11v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button><button type="submit" class="addbtn">Add</button>
         <div class="pick" id="c-who-pick">
           <button type="button" class="who-chris" data-cw="chris" aria-pressed="false" aria-label="Chris">C</button>
           <button type="button" class="who-sophie" data-cw="sophie" aria-pressed="true" aria-label="Sophie">S</button>
@@ -889,7 +894,7 @@ function renderLists(){
   var hasEx = items.some(function(t){return t.example;});
   $('l-items').innerHTML = (hasEx?'<div style="margin-bottom:8px"><span class="example">Examples</span></div>':'')+ (items.map(function(t){
     var w = S.list==='todo'? (t.who||'both') : 'both';
-    return '<div class="todo who-'+w+(t.done?' done':'')+'" data-id="'+esc(t.id)+'"><button class="check" aria-label="Tick off">'+(t.done?'<svg width="12" height="12" viewBox="0 0 14 14"><path d="m3 7.5 2.6 2.6L11 4.5" stroke="var(--card)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</button><div class="tx">'+esc(t.text)+'</div>'+(S.list==='todo'?'<div class="w">'+(w==='both'?'Both':w==='chris'?'Chris':'Sophie')+'</div>':'')+'</div>';
+    return '<div class="todo who-'+w+(t.done?' done':'')+'" data-id="'+esc(t.id)+'"><button class="check" aria-label="Tick off">'+(t.done?'<svg width="12" height="12" viewBox="0 0 14 14"><path d="m3 7.5 2.6 2.6L11 4.5" stroke="var(--card)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</button><div class="tx">'+esc(t.text)+'</div>'+(S.list==='todo'?'<div class="w">'+(w==='both'?'Both':w==='chris'?'Chris':'Sophie')+'</div>':'')+'<button type="button" class="del" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>';
   }).join('') || '<div class="empty">Nothing here. Add one below.</div>');
 }
 
@@ -1046,7 +1051,7 @@ function renderCTodos(){
   setPressed('[data-cw]','data-cw',S.cAddWho);
   $('c-todo').innerHTML = (todos.some(function(t){return t.example;})?'<div style="margin-bottom:8px"><span class="example">Examples</span></div>':'') + (todos.map(function(t){
     var w=t.who||'both';
-    return '<div class="todo who-'+w+(t.done?' done':'')+'" data-id="'+esc(t.id||'')+'" data-board="content"><button class="check" aria-label="Tick off">'+(t.done?'<svg width="12" height="12" viewBox="0 0 14 14"><path d="m3 7.5 2.6 2.6L11 4.5" stroke="var(--card)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</button><div class="tx">'+esc(t.text)+(t.sub?'<div class="faint" style="font-size:12.5px">'+esc(t.sub)+'</div>':'')+'</div><div class="w">'+(w==='both'?'Both':w==='chris'?'Chris':'Sophie')+'</div></div>';
+    return '<div class="todo who-'+w+(t.done?' done':'')+'" data-id="'+esc(t.id||'')+'" data-board="content"><button class="check" aria-label="Tick off">'+(t.done?'<svg width="12" height="12" viewBox="0 0 14 14"><path d="m3 7.5 2.6 2.6L11 4.5" stroke="var(--card)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</button><div class="tx">'+esc(t.text)+(t.sub?'<div class="faint" style="font-size:12.5px">'+esc(t.sub)+'</div>':'')+'</div><div class="w">'+(w==='both'?'Both':w==='chris'?'Chris':'Sophie')+'</div><button type="button" class="del" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>';
   }).join('') || '<div class="wait" style="padding:6px 0">Nothing on the list. Add one below.</div>');
 }
 
@@ -1496,14 +1501,21 @@ document.addEventListener('click', function(e){
   else if(b.dataset.mic){
     if(HOLD && Date.now()-HOLD.at>600 && !VOICE) return;
     if(b.dataset.mic==='meal-input'){ var inp=$('meal-input'); dictate(b, function(t){ inp.value=t; setMeal(t); }, inp); }
-    else if(b.dataset.mic==='add-input'){ var ai=$('add-input'); dictate(b, function(t){ ai.value=t; $('add-form').requestSubmit ? $('add-form').requestSubmit() : $('add-form').dispatchEvent(new Event('submit',{cancelable:true})); }, ai); }
-    else if(b.dataset.mic==='c-add-input'){ var ci=$('c-add-input'); dictate(b, function(t){ ci.value=t; $('c-add-form').requestSubmit ? $('c-add-form').requestSubmit() : $('c-add-form').dispatchEvent(new Event('submit',{cancelable:true})); }, ci); }
+    /* voice only fills the box: check the words, then press Add (Chris, 23 Oct 2026) */
+    else if(b.dataset.mic==='add-input'){ var ai=$('add-input'); dictate(b, function(t){ ai.value=t; say('Check it, then press Add.'); }, ai); }
+    else if(b.dataset.mic==='c-add-input'){ var ci=$('c-add-input'); dictate(b, function(t){ ci.value=t; say('Check it, then press Add.'); }, ci); }
     else { dictate(b, function(t){ var k='health.log.'+S.who+'.'+ymd(today0()), arr=store(k)||[]; arr.push({t:hm(now()), text:t}); store(k,arr); renderHealth();
       /* the script upserts the whole row, so carry today's phone answers across and keep its note */
       var ex=((D.checkins&&D.checkins[S.who])||[]).filter(function(r){ return r.date===ymd(today0()) && r.type==='night'; })[0]||{}, body={action:'checkin.night', who:S.who, date:ymd(today0())};
       Object.keys(ex).forEach(function(key){ if(['date','type','at','note','sleep','stress'].indexOf(key)<0 && ex[key]!=null && ex[key]!=='') body[key]=ex[key]; });
       var said=arr.map(function(l){return l.text;}).join(' | '); body.note = ex.note && said.indexOf(ex.note)<0 ? ex.note+' | '+said : said;
       api(body).then(function(r){ if(r) load(false); }); }); }
+  }
+  else if(b.classList.contains('del')){
+    var drow=b.closest('.todo'); if(!drow||!drow.dataset.id) return; var did=drow.dataset.id;
+    if(drow.dataset.board==='content'){ var dc=getCTodos().filter(function(t){ return String(t.id)!==did; }); if(!live()) store('ctodos',dc); else { D.contentTodos=dc; if(D.stl&&D.stl.content) D.stl.content.todos=dc; } renderContent(); if(did.charAt(0)!=='u') api({action:'todo.delete', id:did}); }
+    else { var DL=getList(); DL[S.list]=(DL[S.list]||[]).filter(function(t){ return String(t.id)!==did; }); if(live()){ if(S.list==='todo') D.todos=DL.todo; else D.shopping=DL.shop; } else store('lists',DL); renderLists();
+      if(did.charAt(0)!=='u') api({action:(S.list==='todo'?'todo.delete':'shop.delete'), id:did}); }
   }
   else if(b.classList.contains('check') && b.closest('.todo') && b.closest('.todo').dataset.board==='content'){
     var crow=b.closest('.todo'), cl=getCTodos(), chit=null; cl.forEach(function(t){ if(String(t.id)===crow.dataset.id){ t.done=!t.done; chit=t; } }); if(!live()) store('ctodos',cl); renderContent();
