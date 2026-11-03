@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="robots" content="noindex">
+<!--BODY-START-->
+<title>Stock Runway</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  Products page, 3 Nov 2026 (job j-282). One row per product: stock now and on the way, sizes out, selling per day,
+  when sizes start to go, when sales get hit (2 of S/M/L out), when it is basically sold out, and whether it is reordered.
+  Reads the Fridge Board script (same address and key as the board, stored as fridge.cfg). No model, no tokens.
+  The forecast is plain arithmetic in this page:
+    pace      = units sold over the last 7 complete days / 7 (or 28 days, one tap)
+    size mix  = 90-day sales by size, shrunk toward the style's usual curve (thin samples lean on the curve)
+    each day  = each size sells pace x its share (shares re-weighted over the sizes that could sell last week);
+                a size sells only while it has stock, or on preorder while a shipment is due; arrivals land on their date
+    sales hit = the first day N of S, M, L are out (N = 2 unless changed)
+    reorder   = a PO line the tracker has not picked up yet (PO17): lands order date + 50-60 days; the forecast uses 60
+  Colour: red = sales hit inside the restock time (65 days) with nothing ordered; amber = a gap even with the reorder,
+  or order within 30 days; green = plenty; grey = not selling.
+-->
+<style>
+/* Layout: one row per product, grouped by style. Picture, then numbers across, then a 6-month runway bar. */
+:root{
+  --paper:#F2ECDF; --card:#FBF8F1; --card-2:#F5EEDB; --ink:#383845; --ink-2:#5C5F6C; --ink-3:#676A79;
+  --line:rgba(56,56,69,.10); --fill:rgba(56,56,69,.055);
+  --red:#A84A38; --red-f:#C46A55; --red-t:#F3E2DC;
+  --amber:#846324; --amber-f:#D3A24A; --amber-t:#F5E9C9;
+  --green:#4C7150; --green-f:#86A98A; --green-t:#E3ECE0;
+  --blue:#4C6C90; --blue-f:#8FB0D2; --blue-t:#E4EEF6;
+  --choc:#6B4A3A; --grey-f:#C9C3B5;
+  --f:"Avenir Next","Avenir",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --fs:"New York","Iowan Old Style","Palatino",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#1C1F28; --card:#252936; --card-2:#2C3140; --ink:#F2ECDF; --ink-2:#B2B4BE; --ink-3:#9B9FAB;
+  --line:rgba(242,236,223,.10); --fill:rgba(242,236,223,.07);
+  --red:#E2897A; --red-f:#C4705E; --red-t:#43302C; --amber:#D9AC55; --amber-f:#B8903F; --amber-t:#43392A;
+  --green:#86AD8B; --green-f:#6E9473; --green-t:#2C3A2F; --blue:#8FABCC; --blue-f:#6F8FB3; --blue-t:#2B3744;
+  --choc:#C9A48F; --grey-f:#4A4F5E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1C1F28; --card:#252936; --card-2:#2C3140; --ink:#F2ECDF; --ink-2:#B2B4BE; --ink-3:#9B9FAB;
+  --line:rgba(242,236,223,.10); --fill:rgba(242,236,223,.07);
+  --red:#E2897A; --red-f:#C4705E; --red-t:#43302C; --amber:#D9AC55; --amber-f:#B8903F; --amber-t:#43392A;
+  --green:#86AD8B; --green-f:#6E9473; --green-t:#2C3A2F; --blue:#8FABCC; --blue-f:#6F8FB3; --blue-t:#2B3744;
+  --choc:#C9A48F; --grey-f:#4A4F5E; color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 var(--f);font-variant-numeric:tabular-nums}
+.wrap{max-width:1320px;margin:0 auto;padding-block:26px 70px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit}
+
+.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.brand{font-size:10px;letter-spacing:.24em;font-weight:700;text-transform:uppercase;color:var(--choc)}
+h1{margin:2px 0 0;font:italic 400 32px/1.1 var(--fs);text-wrap:balance}
+.asat{font-size:12px;color:var(--ink-3);margin-top:4px}
+.asat.warn{color:var(--amber)}
+.ctl{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-2)}
+.seg{display:inline-flex;background:var(--fill);border-radius:99px;padding:2px}
+.seg button{border:0;background:none;padding:5px 11px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-2);min-height:30px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seg button:focus-visible,.chip:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+
+.sum{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+.chip{--a:var(--ink-2);--t:var(--fill);border:1px solid transparent;background:var(--t);color:var(--a);border-radius:12px;padding:8px 13px;cursor:pointer;text-align:left;min-width:120px}
+.chip b{display:block;font-size:22px;line-height:1.1}
+.chip span{font-size:11px;font-weight:600;letter-spacing:.04em}
+.chip.on{border-color:var(--a)}
+.chip.red{--a:var(--red);--t:var(--red-t)} .chip.amber{--a:var(--amber);--t:var(--amber-t)}
+.chip.blue{--a:var(--blue);--t:var(--blue-t)} .chip.green{--a:var(--green);--t:var(--green-t)}
+.note{font-size:12px;color:var(--ink-3);margin:4px 0 0;max-width:80ch}
+.note.warn{color:var(--amber)}
+
+.grp{margin-top:26px}
+.gh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:0 4px 8px;border-bottom:1px solid var(--line)}
+.gh h2{margin:0;font:italic 400 22px/1.2 var(--fs)}
+.gh .gs{font-size:12px;color:var(--ink-3)}
+.axis{display:grid;grid-template-columns:var(--cols);gap:0 16px;padding:6px 14px 0}
+.axis .ticks{grid-column:3;position:relative;height:16px;font-size:10px;color:var(--ink-3)}
+.axis .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.axis .ticks span:first-child{transform:none}
+
+:root{--cols:72px minmax(170px,1.1fr) minmax(0,3fr)}
+.row{display:grid;grid-template-columns:var(--cols);gap:6px 16px;align-items:center;background:var(--card);border-radius:16px;padding:12px 14px;margin-top:8px}
+.pic{width:72px;height:90px;border-radius:10px;background:var(--card-2);overflow:hidden;grid-row:span 2;align-self:start}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic i{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font:italic 22px var(--fs);color:var(--ink-3)}
+.name{min-width:0;grid-row:span 2;align-self:start}
+.name b{display:block;font-size:15px;font-weight:600}
+.name small{display:block;font-size:12px;color:var(--ink-3)}
+.badge{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:99px;color:var(--a);background:var(--t)}
+.badge.red{--a:var(--red);--t:var(--red-t)} .badge.amber{--a:var(--amber);--t:var(--amber-t)} .badge.green{--a:var(--green);--t:var(--green-t)}
+.badge.blue{--a:var(--blue);--t:var(--blue-t)} .badge.grey{--a:var(--ink-3);--t:var(--fill)}
+.why{display:block;font-size:11.5px;color:var(--ink-2);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px 14px;min-width:0}
+.st .l{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-3)}
+.st .v{font-size:17px;font-weight:600;line-height:1.25}
+.st .s{font-size:11px;color:var(--ink-2)}
+.st .v.red{color:var(--red)} .st .v.amber{color:var(--amber)} .st .v.green{color:var(--green)} .st .v.blue{color:var(--blue)}
+.sizes{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
+.sz{font-size:10px;font-weight:600;min-width:27px;text-align:center;border-radius:5px;padding:1px 3px;background:var(--fill);color:var(--ink-2);line-height:1.35}
+.sz em{display:block;font-style:normal;font-size:11px;color:var(--ink)}
+.sz.out{opacity:.5} .sz.out em{text-decoration:line-through;color:var(--ink-3)}
+.sz.pre{background:var(--blue-t);color:var(--blue)} .sz.pre em{color:var(--blue)}
+.sz.low{background:var(--amber-t);color:var(--amber)} .sz.low em{color:var(--amber)}
+.sz.core{box-shadow:inset 0 -2px 0 var(--ink-3)}
+
+.bar{position:relative;height:26px;min-width:0}
+.bar .trk{position:absolute;left:0;right:0;top:9px;height:9px;border-radius:5px;background:var(--fill)}
+.bar .run{position:absolute;top:9px;height:9px;border-radius:5px 0 0 5px}
+.bar .run.red{background:var(--red-f)} .bar .run.amber{background:var(--amber-f)} .bar .run.green{background:var(--green-f)} .bar .run.grey{background:var(--grey-f)}
+.bar .broken{position:absolute;top:9px;height:9px;opacity:.55;
+  background:repeating-linear-gradient(135deg,var(--a) 0 3px,transparent 3px 6px)}
+.bar .lead{position:absolute;top:2px;bottom:0;border-left:1.5px dashed var(--ink-3)}
+.bar .lead span{position:absolute;top:-1px;left:4px;font-size:9.5px;color:var(--ink-3);white-space:nowrap}
+.bar .arr{position:absolute;top:5px;width:12px;height:17px;margin-left:-6px;border-radius:3px;background:var(--blue);border:2px solid var(--card)}
+.bar .arr.re{background:var(--card);border:2px solid var(--blue)}
+.bar .rng{position:absolute;top:23px;height:3px;border-radius:2px;background:var(--blue-f)}
+.bar .more{position:absolute;right:-2px;top:6px;font-size:10px;font-weight:700;color:var(--ink-3);background:var(--card);padding-left:3px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:10px}
+.legend i{display:inline-block;vertical-align:-1px;margin-right:5px;width:16px;height:9px;border-radius:3px}
+
+.coming{margin-top:30px}
+.cl{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.cc{display:flex;gap:10px;align-items:center;background:var(--card);border-radius:14px;padding:8px 12px 8px 8px;font-size:12px;color:var(--ink-2)}
+.cc b{display:block;color:var(--ink);font-size:13px}
+.cc .pic{width:40px;height:50px;grid-row:auto}
+.row[data-c="grey"]{opacity:.72}
+.empty{font:italic 16px var(--fs);color:var(--ink-3);padding:30px 4px}
+
+#setup{max-width:520px;margin:12vh auto 0;background:var(--card);border-radius:18px;padding:24px;
+  padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+#setup input{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);margin:6px 0 12px}
+#setup button{border:0;border-radius:10px;padding:10px 16px;background:var(--ink);color:var(--paper);font-weight:600;cursor:pointer}
+
+@media (max-width:1050px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:720px){
+  :root{--cols:60px minmax(0,1fr)}
+  .pic{width:60px;height:75px;grid-row:span 1}
+  .name{grid-row:auto}
+  .stats,.bar{grid-column:1/-1}
+  .axis{display:none}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:no-preference){.row{transition:opacity .2s}}
+</style>
+
+<div class="wrap" id="app">
+  <div class="mast">
+    <div>
+      <div class="brand">Say The Label · Stock</div>
+      <h1>How long each piece lasts</h1>
+      <div class="asat" id="asat"></div>
+    </div>
+    <div class="ctl">
+      <label>Pace <span class="seg" id="segPace"><button data-v="7" class="on">Last 7 days</button><button data-v="28">Last 28</button></span></label>
+      <label>Restock takes <span class="seg" id="segLead"><button data-v="60">60 d</button><button data-v="65" class="on">65 d</button><button data-v="70">70 d</button></span></label>
+      <label>Sales hit when <span class="seg" id="segHit"><button data-v="1">1</button><button data-v="2" class="on">2</button><button data-v="3">3</button></span> of S, M, L are out</label>
+    </div>
+  </div>
+  <div class="sum" id="sum"></div>
+  <p class="note" id="note"></p>
+  <div class="legend">
+    <span><i style="background:var(--green-f)"></i>Full size run left</span>
+    <span><i style="background:repeating-linear-gradient(135deg,var(--ink-3) 0 3px,transparent 3px 6px);opacity:.6"></i>Still selling, sizes missing</span>
+    <span><i style="background:var(--blue);border-radius:3px;width:9px"></i>Shipment lands</span>
+    <span><i style="background:var(--card);border:2px solid var(--blue);border-radius:3px;width:9px"></i>Reorder lands (50-60 days)</span>
+    <span><i style="border-left:1.5px dashed var(--ink-3);border-radius:0;width:4px"></i>Restock time from today</span>
+  </div>
+  <div id="list"></div>
+  <div class="coming" id="coming"></div>
+</div>
+
+<form id="setup" hidden>
+  <div class="brand">Say The Label · Stock</div>
+  <h1 style="font-size:24px;margin-bottom:10px">Connect to the Fridge Board script</h1>
+  <p class="note">Same web app address and key as the Fridge Board. Once is enough on this device.</p>
+  <label for="suApi">Web app address</label><input id="suApi" autocomplete="off">
+  <label for="suKey">Key</label><input id="suKey" autocomplete="off">
+  <button type="submit">Connect</button> <span class="note" id="suErr"></span>
+</form>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var SIZES=['2XS','XS','S','M','L','XL','2XL'], CORE=['S','M','L'];
+var HORIZON=180, SIM=400;
+var EXCLUDE=/gift card|^test\b|shipping protection|unlimited return|basket/i;
+/* Each style's usual size mix (share of units, 2XS..2XL). Tee and Daisy from the PO17 splits Chris set on 1-2 Nov;
+   Wrap Top skews small (ties at the waist), Peggy is cut oversized; jackets peak at S/M (technical-reference). */
+var CURVES={
+  tee:[1,6,24,28,21,15,5], daisy:[1,5,24,27,17,8,4], wrap:[3,22,27,25,14,7,2], peggy:[6,20,28,24,13,6,3],
+  jacket:[2,15,30,29,15,7,2], dflt:[2,8,22,28,21,13,6]};
+function curveFor(fam){fam=fam.toLowerCase();
+  if(/tee|long sleeve/.test(fam))return CURVES.tee; if(/daisy/.test(fam))return CURVES.daisy; if(/wrap top/.test(fam))return CURVES.wrap;
+  if(/peggy/.test(fam))return CURVES.peggy; if(/jacket/.test(fam))return CURVES.jacket; return CURVES.dflt}
+var GROUPS=[['Wrap Top',/^wrap top/i],['Daisy Asymmetric Top',/^daisy asymmetric/i],['Signature Tee',/^signature tee|^men'?s signature tee/i],
+  ['Signature Long Sleeve',/^signature long sleeve/i],['Peggy Shirt',/^peggy shirt/i],['Elle Wave Jacket',/^elle wave/i],
+  ['Wave Denim',/^wave denim|^wave mini/i],['Daisy',/^daisy/i]];
+
+var D=null, LAST=0, FAIL='', ST={pace:7,lead:65,hit:2,filter:''};
+try{var sv=JSON.parse(localStorage.getItem('stock.view')||'null');if(sv){ST.pace=sv.pace||7;ST.lead=sv.lead||65;ST.hit=sv.hit||2}}catch(e){}
+function save(){try{localStorage.setItem('stock.view',JSON.stringify({pace:ST.pace,lead:ST.lead,hit:ST.hit}))}catch(e){}}
+
+function melDay(d){return new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Melbourne',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}
+function addDays(iso,n){var d=new Date(Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)+n));return d.toISOString().slice(0,10)}
+function diff(a,b){return Math.round((Date.parse(b)-Date.parse(a))/86400000)}
+function dm(iso){return (+iso.slice(8,10))+' '+MON[+iso.slice(5,7)-1]}
+function wdm(iso){var d=new Date(Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)));return WD[d.getUTCDay()]+' '+dm(iso)}
+function ago(iso){if(!iso)return 'never';var m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000));if(m<60)return m+' min ago';var h=Math.round(m/60);return h<36?h+' h ago':Math.round(h/24)+' days ago'}
+function norm(s){return String(s||'').toLowerCase().replace(/[^a-z]/g,'')}
+function sum(o){var n=0;for(var k in o)n+=o[k]||0;return n}
+function r1(x){return x>=10?String(Math.round(x)):(Math.round(x*10)/10).toFixed(1)}
+function thumb(u){if(!u)return '';if(/^data:/.test(u)||!/cdn\.shopify\.com/.test(u))return u;return u+(u.indexOf('?')>-1?'&':'?')+'width=200'}
+
+/* ---------- the forecast ---------- */
+function linesFor(p,all){
+  var cut=p.title.indexOf(' - '),fam=cut>=0?p.title.slice(0,cut):p.title,col=cut>=0?p.title.slice(cut+3):'';
+  return (all||[]).filter(function(l){
+    var sf=norm(fam).indexOf(norm(l.style))===0&&norm(l.style).length>=norm(fam).length-1;
+    return sf&&(col?norm(l.colour).indexOf(norm(col))===0||norm(col).indexOf(norm(l.colour))===0:norm(fam)===norm(l.style));
+  });
+}
+function forecast(p,today){
+  var cut=p.title.indexOf(' - '),fam=cut>=0?p.title.slice(0,cut):p.title;
+  var inv=p.inventory_by_size||{}, sizes=Object.keys(inv);
+  var curve=curveFor(fam), s90=p.sold_by_size_90d||{}, s7=p.sold_by_size_7d||{}, has90=Object.keys(s90).length>0;
+  var prior={};sizes.forEach(function(z){var i=SIZES.indexOf(z);prior[z]=i>=0?curve[i]/100:1/sizes.length});
+  var n90=0;sizes.forEach(function(z){n90+=Math.max(0,s90[z]||0)});
+  var K=15, share={};sizes.forEach(function(z){share[z]=(Math.max(0,s90[z]||0)+K*prior[z])/(n90+K)});
+  /* pace: units a day. 7 = the last 7 complete days by size when the script sends them, else the product's 7-day total */
+  var sold7=Object.keys(s7).length?sum(s7):p.units_sold_7d||0;
+  var rate=Math.max(0,ST.pace===28?(p.units_sold_28d||0)/28:sold7/7);
+  /* the sizes that could sell last week carry the observed pace */
+  var preorder=sizes.some(function(z){return inv[z]<0})||!!p.incoming_preorder;
+  var lines=D.stl.incoming&&D.stl.incoming.lines?linesFor(p,D.stl.incoming.lines):null, estSizes=false;
+  if(!lines){lines=[];if(p.incoming_units)lines.push({po:'',units:p.incoming_units,by_size:{},eta:p.incoming_eta,reorder:false})}
+  var arrivals=lines.map(function(l){
+    var bs={},tot=sum(l.by_size||{});
+    if(tot>0)sizes.forEach(function(z){bs[z]=(l.by_size[z]||0)*(l.units||tot)/tot});
+    else{estSizes=true;var ps=0;sizes.forEach(function(z){ps+=prior[z]});sizes.forEach(function(z){bs[z]=(l.units||0)*prior[z]/ps})}
+    var eta=l.reorder?(l.eta_to||l.eta):l.eta, day=eta?Math.max(0,diff(today,eta)):0;
+    return {po:l.po,units:l.units,day:day,eta:eta,from:l.eta,to:l.eta_to,reorder:!!l.reorder,stage:l.stage,bs:bs};
+  }).sort(function(a,b){return a.day-b.day});
+  var could=0;sizes.forEach(function(z){if(inv[z]!==0||(s7[z]||0)>0||(preorder&&arrivals.length))could+=share[z]});
+  could=Math.max(could,0.25);
+  var dem={};sizes.forEach(function(z){dem[z]=rate*share[z]/could});
+
+  var st={},had={};sizes.forEach(function(z){st[z]=inv[z]||0;had[z]=inv[z]!==0||arrivals.some(function(a){return a.bs[z]>0.5})});
+  var start=0;sizes.forEach(function(z){start+=Math.max(0,st[z])});arrivals.forEach(function(a){start+=a.units||0});
+  var coreSizes=CORE.filter(function(z){return z in inv});
+  var outAt={}, firstOut=null, hit=null, back=null, gone=null, need=Math.min(ST.hit,coreSizes.length||ST.hit);
+  var pending=function(z,d){for(var i=0;i<arrivals.length;i++)if(arrivals[i].day>d&&!arrivals[i].reorder&&arrivals[i].bs[z]>0)return true;return false};
+  for(var d=0;d<=SIM;d++){
+    arrivals.forEach(function(a){if(a.day===d)sizes.forEach(function(z){st[z]+=a.bs[z]})});
+    var left=0,coreOut=0,anyOut=false;
+    sizes.forEach(function(z){
+      var pre=preorder&&pending(z,d);
+      if(st[z]>1e-6)st[z]=Math.max(0,st[z]-dem[z]);else if(pre)st[z]-=dem[z];
+      var out=!(st[z]>0.5)&&!pre;
+      if(out&&had[z])anyOut=true;   /* first size out = the first size we have now (or have coming) to run out */
+      if(out&&outAt[z]==null)outAt[z]=d; if(!out)outAt[z]=null;
+      if(out&&CORE.indexOf(z)>=0)coreOut++;
+      left+=Math.max(0,st[z]);
+    });
+    arrivals.forEach(function(a){if(a.day>d)left+=a.units||0});
+    if(firstOut==null&&anyOut)firstOut=d;
+    if(hit==null&&coreOut>=need&&rate>0)hit=d;
+    if(hit!=null&&back==null&&d>hit&&coreOut<need)back=d;
+    if(gone==null&&rate>0&&left<=Math.max(3,start*0.05))gone=d;
+  }
+  var outNow=sizes.filter(function(z){return !(inv[z]>0)}).length;
+  var re=arrivals.filter(function(a){return a.reorder}), near=arrivals.filter(function(a){return !a.reorder});
+  /* status */
+  var lead=ST.lead, s;
+  if(rate<0.05)s={c:'grey',t:'Not selling',w:(p.units_sold_28d?p.units_sold_28d+' sold in 28 days':'No sales in 28 days')};
+  else if(rate<0.15&&!arrivals.length)s={c:'grey',t:'Slow',w:'About '+Math.max(1,Math.round(rate*7))+' a week, '+(hit===0?'with sizes already broken':'nothing on order')};
+  else if(hit===0&&!arrivals.length)s={c:'red',t:'Sizes gone now',w:'Two of S, M, L are already out and nothing is on order'};
+  else if(hit!=null&&hit<=lead&&!re.length)s={c:'red',t:'Order now',w:'Sales get hit '+(hit===0?'now':'in '+hit+' days')+', a restock takes '+lead};
+  else if(hit!=null&&hit<=lead&&re.length)s={c:'amber',t:'Gap before '+re[0].po,w:(back!=null?'Out from '+dm(addDays(today,hit))+', back ~'+dm(addDays(today,back)):'Out from '+dm(addDays(today,hit)))};
+  else if(hit!=null&&hit<=lead+30)s={c:'amber',t:'Order by '+dm(addDays(today,hit-lead)),w:'Sales get hit in '+hit+' days'};
+  else s={c:'green',t:'Plenty',w:hit==null?'Size run holds past '+Math.round(SIM/30)+' months':'Order by '+dm(addDays(today,hit-lead))};
+  return {p:p,fam:fam,colour:cut>=0?p.title.slice(cut+3):'',sizes:sizes,inv:inv,dem:dem,rate:rate,sold7:sold7,
+    arrivals:arrivals,near:near,re:re,firstOut:firstOut,hit:hit,back:back,gone:gone,outNow:outNow,preorder:preorder,
+    est:!has90,estSizes:estSizes,s:s,onWay:near.reduce(function(n,a){return n+(a.units||0)},0),reUnits:re.reduce(function(n,a){return n+(a.units||0)},0)};
+}
+
+/* ---------- render ---------- */
+function dayCell(label,d,today,cls,sub){
+  if(d==null)return st(label,'—',sub||'past '+Math.round(SIM/30)+' months','');
+  var v=d===0?'Now':d+' d';
+  return st(label,v,(d===0?'':wdm(addDays(today,d)))+(sub?' · '+sub:''),cls);
+}
+function st(l,v,s,cls){return '<div class="st"><div class="l">'+l+'</div><div class="v '+(cls||'')+'">'+v+'</div><div class="s">'+(s||'&nbsp;')+'</div></div>'}
+function pos(d){return Math.min(100,d/HORIZON*100)}
+function bar(f,today){
+  var h='<div class="bar" aria-hidden="true"><div class="trk"></div>';
+  var c=f.s.c, end=f.hit==null?HORIZON:f.hit;
+  if(f.rate>=0.05){
+    h+='<div class="run '+c+'" style="left:0;width:'+pos(end)+'%"></div>';
+    if(f.hit!=null&&f.hit<HORIZON){var g=f.gone==null?HORIZON:Math.max(f.gone,f.hit+1);
+      h+='<div class="broken" style="--a:var(--'+(c==='green'?'green':c==='red'?'red':'amber')+'-f);left:'+pos(f.hit)+'%;width:'+(pos(g)-pos(f.hit))+'%"></div>'}
+    if(f.back!=null&&f.back<HORIZON){var g2=f.gone==null?HORIZON:f.gone;
+      h+='<div class="run '+c+'" style="border-radius:0;left:'+pos(f.back)+'%;width:'+Math.max(0,pos(g2)-pos(f.back))+'%;opacity:.85"></div>'}
+  }
+  f.arrivals.forEach(function(a){if(a.day>HORIZON)return;
+    if(a.reorder&&a.from)h+='<div class="rng" style="left:'+pos(diff(today,a.from))+'%;width:'+(pos(diff(today,a.to||a.from))-pos(diff(today,a.from)))+'%"></div>';
+    h+='<div class="arr'+(a.reorder?' re':'')+'" style="left:'+pos(a.day)+'%" title="'+esc((a.po||'Shipment')+': '+a.units+' lands ~'+(a.eta?dm(a.eta):'?'))+'"></div>'});
+  h+='<div class="lead" style="left:'+pos(ST.lead)+'%"><span>'+ST.lead+' d restock</span></div>';
+  if(f.gone==null||f.gone>HORIZON)h+='<div class="more">6 mo+</div>';
+  return h+'</div>';
+}
+function sizeChips(f){
+  return '<div class="sizes">'+f.sizes.map(function(z){var n=f.inv[z],cls='sz';
+    if(n<0)cls+=' pre';else if(n<=0)cls+=' out';else if(f.dem[z]>0&&n/f.dem[z]<14)cls+=' low';
+    if(CORE.indexOf(z)>=0)cls+=' core';
+    return '<span class="'+cls+'" title="'+esc(z+': '+n+(n<0?' (preorders waiting)':''))+'">'+esc(z.replace(' - ','-'))+'<em>'+(n<0?n:n)+'</em></span>'}).join('')+'</div>';
+}
+function row(f,today){
+  var p=f.p, img=thumb(p.image_url);
+  var stock=Math.max(0,p.inventory_total), pre=0;f.sizes.forEach(function(z){if(f.inv[z]<0)pre-=f.inv[z]});
+  var cells=st('In stock',String(stock),(f.onWay?'+'+f.onWay+' landing '+dm(f.near[0].eta||today):'')+(pre?(f.onWay?' · ':'')+pre+' preordered':''),'')
+    +st('Sizes out',f.outNow+' of '+f.sizes.length,'',f.outNow>=3?'red':f.outNow?'amber':'')
+    +st('Selling a day',f.rate<0.05?'0':r1(f.rate),(ST.pace===7?(f.sold7<0?'returns beat sales':f.sold7+' last 7 days'):(p.units_sold_28d||0)+' last 28'),'')
+    +dayCell('First size out',f.firstOut,today,'')
+    +dayCell('Sales hit',f.hit,today,f.s.c==='green'?'green':f.s.c==='grey'?'':f.s.c,f.back!=null?'back '+dm(addDays(today,f.back)):'')
+    +dayCell('Sold out',f.gone,today,'');
+  var reTxt=f.re.length?'<span class="why">Reordered: '+esc(f.re[0].po)+' +'+f.reUnits+', lands '+dm(f.re[0].from)+'-'+dm(f.re[0].to||f.re[0].from)+'</span>':'';
+  return '<div class="row" data-c="'+f.s.c+'">'
+    +'<div class="pic">'+(img?'<img loading="lazy" alt="" src="'+esc(img)+'">':'<i>'+esc(f.fam.charAt(0))+'</i>')+'</div>'
+    +'<div class="name"><b>'+esc(f.colour||f.fam)+'</b><small>'+esc(f.colour?f.fam:'')+'</small>'
+      +'<span class="badge '+f.s.c+'">'+esc(f.s.t)+'</span><span class="why">'+esc(f.s.w)+'</span>'+reTxt+sizeChips(f)+'</div>'
+    +'<div class="stats">'+cells+'</div>'
+    +bar(f,today)+'</div>';
+}
+function axis(today){var h='<div class="axis"><div></div><div></div><div class="ticks">';
+  for(var m=0;m<=HORIZON;m+=30){var iso=addDays(today,m);h+='<span style="left:'+pos(m)+'%">'+(m===0?'Today':dm(iso))+'</span>'}
+  return h+'</div></div>'}
+
+function render(){
+  var today=melDay(new Date()), s=D.stl||{}, stock=(s.stock||[]).filter(function(p){return !EXCLUDE.test(p.title)});
+  var all=stock.map(function(p){return forecast(p,today)}).filter(function(f){
+    return f.p.inventory_total>0||f.arrivals.length||(f.p.units_sold_28d||0)>0});
+  var groups={};all.forEach(function(f){var g='Everything else';
+    for(var i=0;i<GROUPS.length;i++)if(GROUPS[i][1].test(f.fam)){g=GROUPS[i][0];break}
+    (groups[g]=groups[g]||[]).push(f)});
+  var counts={red:0,amber:0,blue:0,green:0};
+  all.forEach(function(f){if(counts[f.s.c]!=null)counts[f.s.c]++;if(f.re.length)counts.blue++});
+  $('sum').innerHTML=[['red','Order now'],['amber','Gap or order soon'],['green','Plenty'],['blue','Reordered']].map(function(x){
+    return '<button class="chip '+x[0]+(ST.filter===x[0]?' on':'')+'" data-f="'+x[0]+'"><b>'+counts[x[0]]+'</b><span>'+x[1]+'</span></button>'}).join('');
+  var rank={red:0,amber:1,green:2,grey:3};
+  var order=Object.keys(groups).sort(function(a,b){
+    if(a==='Everything else')return 1;if(b==='Everything else')return -1;
+    var ra=groups[a].reduce(function(n,f){return n+f.rate},0),rb=groups[b].reduce(function(n,f){return n+f.rate},0);return rb-ra});
+  var html='';
+  order.forEach(function(g){
+    var fs=groups[g].filter(function(f){return !ST.filter||(ST.filter==='blue'?f.re.length:f.s.c===ST.filter)});
+    if(!fs.length)return;
+    fs.sort(function(a,b){return rank[a.s.c]-rank[b.s.c]||(a.hit==null?999:a.hit)-(b.hit==null?999:b.hit)||b.rate-a.rate});
+    var units=0,rate=0,onway=0;groups[g].forEach(function(f){units+=Math.max(0,f.p.inventory_total);rate+=f.rate;onway+=f.onWay+f.reUnits});
+    html+='<section class="grp"><div class="gh"><h2>'+esc(g)+'</h2><span class="gs">'+units+' in stock'+(onway?' · '+onway+' on the way or ordered':'')+' · '+r1(rate)+' a day</span></div>'
+      +axis(today)+fs.map(function(f){return row(f,today)}).join('')+'</section>';
+  });
+  $('list').innerHTML=html||'<div class="empty">Nothing matches that filter.</div>';
+
+  /* lines on the way for products the site does not stock yet (a new colour) */
+  var matched={};all.forEach(function(f){f.arrivals.forEach(function(a){matched[a.po+'|'+norm(f.p.title)]=1})});
+  var stockTitles=stock.map(function(p){return p});
+  var orphans=(s.incoming&&s.incoming.lines||[]).filter(function(l){
+    return !stockTitles.some(function(p){return linesFor(p,[l]).length})});
+  var imgs={};(s.incoming&&s.incoming.items||[]).forEach(function(i){imgs[norm(i.style+i.colour)]=i.image_url});
+  $('coming').innerHTML=orphans.length?'<div class="gh"><h2>On the way, not on the site yet</h2><span class="gs">New colours and styles: they join the list once Shopify has them</span></div><div class="cl">'
+    +orphans.map(function(l){var im=imgs[norm(l.style+l.colour)];var w=l.reorder?dm(l.eta)+'-'+dm(l.eta_to||l.eta):(l.eta?dm(l.eta):'date TBC');
+      return '<div class="cc"><div class="pic">'+(im?'<img alt="" src="'+esc(thumb(im))+'">':'<i>'+esc(l.style.charAt(0))+'</i>')+'</div><div><b>'+esc(l.style+' · '+l.colour)+'</b>'+esc(l.po)+' · '+l.units+' units · lands '+w+'</div></div>'}).join('')+'</div>':'';
+
+  var notes=[];
+  if(all.every(function(f){return f.est}))notes.push('Size mix uses each style\'s usual curve until the script sends sales by size.');
+  if(!(s.incoming&&s.incoming.lines))notes.push('Shipments are split by the usual size curve and PO17 is not shown until the Fridge Board script is re-pasted.');
+  else if(all.some(function(f){return f.estSizes}))notes.push('Some shipments have no sizes in their PO tab, so they are split by the usual curve.');
+  notes.push('Sold out means all but the last 5% of units, the odd sizes that linger.');
+  notes.push('Pace is the last '+ST.pace+' days. A week with ads paused or a launch reads low or high: tap Last 28 to compare.');
+  $('note').innerHTML=notes.map(esc).join(' ');
+  var stS=(D.status||{}).stock||{};
+  $('asat').className='asat'+(stS.stale||stS.error?' warn':'');
+  $('asat').textContent='Stock from Shopify '+(stS.asAt?ago(stS.asAt):'')+(stS.error?' · last refresh failed':'')+(FAIL?' · offline, showing the last copy':'')+' · '+wdm(today);
+}
+
+/* ---------- controls ---------- */
+function seg(id,key){$(id).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  ST[key]=+b.getAttribute('data-v');[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b)});save();if(D)render()})}
+seg('segPace','pace');seg('segLead','lead');seg('segHit','hit');
+[['segPace','pace'],['segLead','lead'],['segHit','hit']].forEach(function(x){[].forEach.call($(x[0]).children,function(b){b.classList.toggle('on',+b.getAttribute('data-v')===ST[x[1]])})});
+$('sum').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;var f=b.getAttribute('data-f');ST.filter=ST.filter===f?'':f;render()});
+
+/* ---------- data ---------- */
+function cfg(){try{var c=JSON.parse(localStorage.getItem('fridge.cfg'));return c&&c.api&&c.key?c:null}catch(e){return null}}
+function load(){
+  if(window.STOCK_SNAPSHOT){D=window.STOCK_SNAPSHOT;render();return}
+  var c=cfg();if(!c){$('app').hidden=true;$('setup').hidden=false;return}
+  fetch(c.api+(c.api.indexOf('?')>-1?'&':'?')+'key='+encodeURIComponent(c.key),{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .then(function(d){if(!d||d.error)throw new Error(d&&d.error||'empty reply');D=d;FAIL='';LAST=Date.now();
+      try{localStorage.setItem('stock.lastgood',JSON.stringify(d))}catch(e){}
+      $('setup').hidden=true;$('app').hidden=false;render()})
+    .catch(function(e){FAIL=e.message||String(e);
+      if(!D){try{D=JSON.parse(localStorage.getItem('stock.lastgood'))}catch(x){}}
+      if(D)render();else{$('app').hidden=true;$('setup').hidden=false;$('suErr').textContent='Could not load: '+FAIL}});
+}
+$('setup').addEventListener('submit',function(e){e.preventDefault();
+  var raw=$('suApi').value.trim(),m=raw.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/);
+  var key=$('suKey').value.trim().replace(/[^A-Za-z0-9]/g,'');
+  if(!m||!key){$('suErr').textContent='Both boxes are needed.';return}
+  try{localStorage.setItem('fridge.cfg',JSON.stringify({api:m[0],key:key}))}catch(x){}
+  $('suErr').textContent='Connecting…';load()});
+var q=new URLSearchParams(location.search);
+if(q.get('api')&&q.get('key')){try{localStorage.setItem('fridge.cfg',JSON.stringify({api:q.get('api'),key:q.get('key')}))}catch(e){}history.replaceState(null,'',location.pathname)}
+load();
+if(!window.STOCK_SNAPSHOT){setInterval(load,15*60000);document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-LAST>5*60000)load()})}
+})();
+</script>
+<!--BODY-END-->
+</html>
