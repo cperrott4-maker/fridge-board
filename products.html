@@ -13,7 +13,9 @@
   leads every row, Black Friday lifts the pace, every bar carries its own dates, the 'on the way' strip is tidied.
   Reads the Fridge Board script (same address and key as the board, stored as fridge.cfg). No model, no tokens.
   The forecast is plain arithmetic in this page:
-    pace        = units sold over the last 7 complete days / 7 (or 28 days, one tap); once 2 of S, M, L are out
+    pace        = units sold over the last 7 complete days / 7 (or 14 or 28 days, or since the product's last restock:
+                  units sold from the restock day to yesterday / those days; restocked in the last 3 days, or not in a year,
+                  = the best of 7, 14 and 28 days, v5 6 Nov 2026); once 2 of S, M, L are out
                   (the "sales drop" setting), the pace from the last 7 days all three were in stock (script: full_stock),
                   because ads stop and sales fall away when the size run breaks (Chris, 3 Nov 2026)
     Black Friday= pace x 3 (or x5, or off) from 17 to 30 Nov (sale opens Tue 17 Nov, runs to Cyber Monday)
@@ -23,6 +25,7 @@
     runs short  = the first day N of S, M, L are out (N = 2 unless changed): sales start to drop from here
     reorder by  = runs short minus the restock time (65 days unless changed)
     reorder     = a PO the tracker has not picked up yet (PO17): lands order date + 50-60 days; the forecast uses 60
+    new colour  = pace_assumed {rate, note} on a product stands in for its pace until it has a week of sales (v4, 6 Nov 2026)
 -->
 <style>
 /* Layout: one row per product, grouped by style. Photo and name on the left, the reorder date first, numbers across,
@@ -148,6 +151,9 @@ h1{margin:2px 0 0;font:italic 400 32px/1.1 var(--fs);text-wrap:balance}
 .cc .pic{width:44px;height:55px;flex:none}
 .cc .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--blue-t);color:var(--blue);margin-top:3px}
 .empty{font:italic 16px var(--fs);color:var(--ink-3);padding:30px 4px}
+.agent{margin-top:34px;font-size:12px;color:var(--ink-3)}
+.agent summary{cursor:pointer}
+.agent pre{background:var(--card);border-radius:12px;padding:12px;overflow-x:auto;font:11.5px/1.5 ui-monospace,Menlo,monospace;color:var(--ink)}
 
 #setup{max-width:520px;margin:12vh auto 0;background:var(--card);border-radius:18px;padding:24px;
   padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
@@ -172,7 +178,7 @@ h1{margin:2px 0 0;font:italic 400 32px/1.1 var(--fs);text-wrap:balance}
       <div class="asat" id="asat"></div>
     </div>
     <div class="ctl">
-      <span>Selling pace</span><span class="seg" id="segPace"><button data-v="7">Last 7 days</button><button data-v="28">Last 28 days</button></span>
+      <span>Selling pace</span><span class="seg" id="segPace"><button data-v="7">7 days</button><button data-v="14">14 days</button><button data-v="28">28 days</button><button data-v="1">Since restock</button></span>
       <span>Black Friday, 17-30 Nov</span><span class="seg" id="segBf"><button data-v="1">No lift</button><button data-v="3">Sales x3</button><button data-v="5">Sales x5</button></span>
       <span>A restock takes</span><span class="seg" id="segLead"><button data-v="60">60 days</button><button data-v="65">65 days</button><button data-v="70">70 days</button></span>
       <span>Sales drop once</span><span class="seg" id="segHit"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></span>
@@ -189,6 +195,7 @@ h1{margin:2px 0 0;font:italic 400 32px/1.1 var(--fs);text-wrap:balance}
   <p class="note" id="note"></p>
   <div id="list"></div>
   <div class="coming" id="coming"></div>
+  <details class="agent" id="agentBox"><summary>Plain list, for the Grokbot Inventory agent</summary><pre id="agent"></pre></details>
 </div>
 
 <form id="setup" hidden>
@@ -222,9 +229,13 @@ var GROUPS=[['Wrap Top',/^wrap top/i],['Daisy Asymmetric Top',/^daisy asymmetric
   ['Signature Long Sleeve',/^signature long sleeve/i],['Peggy Shirt',/^peggy shirt/i],['Elle Wave Jacket',/^elle wave/i],
   ['Wave Denim',/^wave denim|^wave mini/i],['Daisy',/^daisy/i]];
 
-var D=null, LAST=0, FAIL='', ST={pace:7,bf:3,lead:65,hit:2,filter:''};
-try{var sv=JSON.parse(localStorage.getItem('stock.view2')||'null');if(sv)['pace','bf','lead','hit'].forEach(function(k){if(sv[k])ST[k]=sv[k]})}catch(e){}
-function save(){try{localStorage.setItem('stock.view2',JSON.stringify({pace:ST.pace,bf:ST.bf,lead:ST.lead,hit:ST.hit}))}catch(e){}}
+/* defaults (Chris, 8 Nov 2026): since restock, Black Friday x5, 65-day restock, sales drop once 2 of S/M/L are out.
+   A link can set them for one visit (?pace=1&bf=5&lead=65&hit=2), which is how Grokbot's Inventory agent opens the page. */
+var D=null, LAST=0, FAIL='', ST={pace:1,bf:5,lead:65,hit:2,filter:''}, LINKSET=false, AGENT=new URLSearchParams(location.search).get('agent')==='1';
+try{var sv=JSON.parse(localStorage.getItem('stock.view3')||'null');if(sv)['pace','bf','lead','hit'].forEach(function(k){if(sv[k])ST[k]=sv[k]})}catch(e){}
+(function(){var q=new URLSearchParams(location.search),ok={pace:[1,7,14,28],bf:[1,3,5],lead:[60,65,70],hit:[1,2,3]};
+  ['pace','bf','lead','hit'].forEach(function(k){var v=+q.get(k);if(ok[k].indexOf(v)>-1){ST[k]=v;LINKSET=true}})})();
+function save(){if(LINKSET)return;try{localStorage.setItem('stock.view3',JSON.stringify({pace:ST.pace,bf:ST.bf,lead:ST.lead,hit:ST.hit}))}catch(e){}}
 
 function melDay(d){return new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Melbourne',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}
 function addDays(iso,n){var d=new Date(Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)+n));return d.toISOString().slice(0,10)}
@@ -247,6 +258,22 @@ function linesFor(p,all){
     return sf&&(col?norm(l.colour).indexOf(norm(col))===0||norm(col).indexOf(norm(l.colour))===0:norm(fam)===norm(l.style));
   });
 }
+var RESTOCK=1;   /* the "Since restock" button */
+function paceFor(p,sold7,today){
+  var r7=sold7/7, r14=p.units_sold_14d!=null?p.units_sold_14d/14:null, r28=(p.units_sold_28d||0)/28;
+  var best=function(why){var c=[[r7,'7'],[r14,'14'],[r28,'28']].filter(function(x){return x[0]!=null}).sort(function(a,b){return b[0]-a[0]})[0];
+    return {rate:Math.max(0,c[0]),sub:why+' · best of 7, 14, 28 days ('+c[1]+')'}};
+  if(ST.pace===RESTOCK){
+    var r=p.restock;
+    if(r&&r.date&&r.days>=3)return {rate:Math.max(0,r.units)/r.days,
+      sub:r.units+' since restock '+dm(r.date)+' ('+(r.days<14?r.days+' days':Math.round(r.days/7)+' weeks')+')'};
+    if(r&&r.date)return best('Restocked '+(diff(r.date,today)<=0?'today':dm(r.date)));
+    return best(r===null?'No restock in a year':'Restock date not sent yet');
+  }
+  if(ST.pace===14)return r14!=null?{rate:Math.max(0,r14),sub:p.units_sold_14d+' in the last 14 days'}:{rate:Math.max(0,r7),sub:sold7+' in 7 days (14 not sent yet)'};
+  if(ST.pace===28)return {rate:Math.max(0,r28),sub:(p.units_sold_28d||0)+' in the last 28 days'};
+  return {rate:Math.max(0,r7),sub:sold7<0?'returns beat sales':sold7+' in the last 7 days'};
+}
 function forecast(p,today){
   var cut=p.title.indexOf(' - '),fam=cut>=0?p.title.slice(0,cut):p.title;
   var inv=p.inventory_by_size||{}, sizes=Object.keys(inv);
@@ -255,9 +282,11 @@ function forecast(p,today){
   var n90=0;sizes.forEach(function(z){n90+=Math.max(0,s90[z]||0)});
   var K=15, share={};sizes.forEach(function(z){share[z]=(Math.max(0,s90[z]||0)+K*prior[z])/(n90+K)});
   var sold7=Object.keys(s7).length?sum(s7):p.units_sold_7d||0;
-  var rate=Math.max(0,ST.pace===28?(p.units_sold_28d||0)/28:sold7/7), nowRate=rate, full=null;
+  var pace=paceFor(p,sold7,today), rate=pace.rate, nowRate=rate, full=null;
   var coreIn=CORE.filter(function(z){return z in inv}), coreOutNow=coreIn.filter(function(z){return !(inv[z]>0)}).length;
   if(p.full_stock&&coreIn.length&&coreOutNow>=Math.min(ST.hit,coreIn.length)&&p.full_stock.rate>rate){full=p.full_stock;rate=full.rate}
+  /* a colour launched inside the pace window has no real pace yet: use the stated stand-in (pace_assumed) until it has a week */
+  var assumed=null;if(!full&&p.pace_assumed&&p.pace_assumed.rate>rate){assumed=p.pace_assumed;rate=assumed.rate}
   var preorder=sizes.some(function(z){return inv[z]<0})||!!p.incoming_preorder;
   var lines=D.stl.incoming&&D.stl.incoming.lines?linesFor(p,D.stl.incoming.lines):null, estSizes=false;
   if(!lines){lines=[];if(p.incoming_units)lines.push({po:'',units:p.incoming_units,by_size:{},eta:p.incoming_eta,reorder:false})}
@@ -301,7 +330,8 @@ function forecast(p,today){
   var outNow=sizes.filter(function(z){return !(inv[z]>0)}).length;
   var re=arrivals.filter(function(a){return a.reorder}), near=arrivals.filter(function(a){return !a.reorder});
   /* short now, but stock already on the way fills the gap: the PO to plan is for the next time it runs short */
-  var gap=hit!=null&&back!=null&&near.length&&near[0].day<=back&&hit<near[0].day&&!re.length;
+  var fill=hit!=null&&back!=null?near.filter(function(a){return a.day>hit&&a.day<=back})[0]:null;   /* the arrival that ends the shortage */
+  var gap=!!fill&&!re.length;
   var lead=ST.lead, nextHit=gap?hit2:hit, by=nextHit==null?null:nextHit-lead, o;
   /* the reorder cell: the one thing to act on */
   if(rate<0.05)o={c:'grey',l:'Reorder',v:'Not selling',s:p.units_sold_28d?p.units_sold_28d+' sold in 28 days':'No sales in 28 days'};
@@ -309,11 +339,11 @@ function forecast(p,today){
   else if(re.length&&(hit==null||back!=null||diff(today,re[0].eta)<=hit))
     o={c:hit!=null&&hit<diff(today,re[0].eta)?'amber':'blue',l:'Reordered',v:re[0].po+' +'+re[0].units,
        s:hit!=null&&hit<diff(today,re[0].eta)?(hit===0?'Short now':'Short from '+dm(addDays(today,hit)))+' till it lands ~'+dm(re[0].eta):'Lands '+dm(re[0].from)+'-'+dm(re[0].to||re[0].from)+', covers it'};
-  else if(by!=null&&by<=0)o={c:'red',l:'Reorder by',v:'Now',s:gap?'Back '+dm(near[0].eta)+', short again '+dm(addDays(today,nextHit)):hit===0?'Sizes already short':'Runs short '+dm(addDays(today,hit))+(by<0?', '+(-by)+' days too late for a full run':'')};
-  else if(by!=null&&by<=30)o={c:'amber',l:'Reorder by',v:wdm(addDays(today,by)),s:(gap?'Short till '+dm(near[0].eta)+' · ':'')+inWords(by)};
-  else if(by!=null)o={c:'green',l:'Reorder by',v:wdm(addDays(today,by)),s:(gap?'Short till '+dm(near[0].eta)+' · ':'')+inWords(by)};
-  else o={c:'green',l:'Reorder by',v:'Not yet',s:(gap?'Short till '+dm(near[0].eta)+', then ':'')+'Holds past '+Math.round(SIM/30.4)+' months'};
-  return {p:p,fam:fam,colour:cut>=0?p.title.slice(cut+3):'',sizes:sizes,inv:inv,dem:dem,rate:rate,nowRate:nowRate,full:full,sold7:sold7,bfSold:bfSold,
+  else if(by!=null&&by<=0)o={c:'red',l:'Reorder by',v:'Now',s:gap?'Back '+dm(fill.eta)+', short again '+dm(addDays(today,nextHit)):hit===0?'Sizes already short':'Runs short '+dm(addDays(today,hit))+(by<0?', '+(-by)+' days too late for a full run':'')};
+  else if(by!=null&&(by<=30||gap))o={c:'amber',l:'Reorder by',v:wdm(addDays(today,by)),s:(gap?'Short till '+dm(fill.eta)+' · ':'')+inWords(by)};
+  else if(by!=null)o={c:'green',l:'Reorder by',v:wdm(addDays(today,by)),s:(gap?'Short till '+dm(fill.eta)+' · ':'')+inWords(by)};
+  else o={c:gap?'amber':'green',l:'Reorder by',v:'Not yet',s:(gap?'Short till '+dm(fill.eta)+', then ':'')+'Holds past '+Math.round(SIM/30.4)+' months'};
+  return {p:p,fam:fam,colour:cut>=0?p.title.slice(cut+3):'',sizes:sizes,inv:inv,dem:dem,rate:rate,nowRate:nowRate,full:full,assumed:assumed,paceSub:pace.sub,sold7:sold7,bfSold:bfSold,
     arrivals:arrivals,near:near,re:re,firstOut:firstOut,hit:hit,back:back,hit2:hit2,gap:gap,gone:gone,by:by,outNow:outNow,
     est:!has90,estSizes:estSizes,o:o,onWay:near.reduce(function(n,a){return n+(a.units||0)},0)};
 }
@@ -376,13 +406,14 @@ function sizeChips(f){
 }
 function row(f,today){
   var p=f.p, stock=Math.max(0,p.inventory_total), pre=0;f.sizes.forEach(function(z){if(f.inv[z]<0)pre-=f.inv[z]});
-  var paceSub=ST.pace===7?(f.sold7<0?'returns beat sales':f.sold7+' in the last 7 days'):(p.units_sold_28d||0)+' in the last 28 days';
+  var paceSub=f.paceSub;
   if(f.full){var fr=f.full;paceSub='Last fully stocked '+dm(fr.from)+(fr.to!==fr.from?'-'+dm(fr.to):'')+(fr.to.slice(0,4)!==today.slice(0,4)?' '+fr.to.slice(0,4):'')
     +(fr.days<7?' ('+fr.days+' days)':'')+' · '+r1(f.nowRate)+' a day now'}
+  if(f.assumed)paceSub=f.assumed.note;
   if(ST.bf>1&&f.rate>=0.05&&diff(today,BF.to)>=0)paceSub+=' · '+r1(f.rate*ST.bf)+' in BF';
   var cells='<div class="st order '+f.o.c+'"><div class="l">'+f.o.l+'</div><div class="v">'+esc(f.o.v)+'</div><div class="s">'+esc(f.o.s)+'</div></div>'
-    +st('In stock',String(stock),(f.onWay?'+'+f.onWay+' landing '+dm(f.near[0].eta||today):'')+(pre?(f.onWay?' · ':'')+pre+' preordered':''),'')
-    +st(f.full?'Selling a day, full sizes':'Selling a day',f.rate<0.05?'0':r1(f.rate),paceSub,'')
+    +st('In stock',String(stock),f.near.slice(0,2).map(function(a,i){return '+'+a.units+(i?' ':' lands ')+dm(a.eta||today)}).join(' · ')+(f.near.length>2?' · more':'')+(pre?(f.onWay?' · ':'')+pre+' preordered':''),'')
+    +st(f.full?'Selling a day, full sizes':f.assumed?'Selling a day, assumed':'Selling a day',f.rate<0.05?'0':r1(f.rate),paceSub,'')
     +st('Sizes out now',f.outNow+' of '+f.sizes.length,'',f.outNow>=3?'red':f.outNow?'amber':'')
     +dayCell('Runs short',f.hit,today,f.o.c==='red'?'red':f.o.c==='amber'?'amber':'',f.back!=null?'back '+dm(addDays(today,f.back)):'')
     +dayCell('Sold out',f.gone,today,'');
@@ -426,18 +457,30 @@ function render(){
       return '<div class="cc">'+pic(imgs[norm(l.style+l.colour)],l.colour.charAt(0))+'<div><b>'+esc(l.colour+' '+l.style)+'</b>'+l.units+' units · lands '+w
         +'<br><span class="tag">'+esc(l.po+(l.reorder?' reorder':''))+'</span></div></div>'}).join('')+'</div>':'';
 
-  var notes=[];
+  var notes=[];if(D.snapshot_note)notes.push(D.snapshot_note);
   if(all.every(function(f){return f.est}))notes.push('Size mix uses each style\'s usual curve until the script sends sales by size.');
   if(!(s.incoming&&s.incoming.lines))notes.push('PO17 and the shipment sizes appear once the Fridge Board script is re-pasted.');
   else if(all.some(function(f){return f.estSizes}))notes.push('Some shipments have no sizes on their PO tab, so they are split by the usual curve.');
   notes.push('Sold out means all but the last 5% of units, the odd sizes that linger.');
   if(!stock.some(function(p){return 'full_stock' in p}))notes.push('Products missing sizes still use last week\'s slow pace until the Fridge Board script is re-pasted; then they use their pace from when they were last fully stocked.');
-  notes.push('Selling pace is the last '+ST.pace+' days: a week with ads off, a preorder or a launch reads low or high, so compare with 28 days.');
+  notes.push(ST.pace===RESTOCK?'Since restock counts from the day new stock went into Shopify to yesterday; anything restocked in the last 3 days, or not in a year, uses its best of 7, 14 and 28 days.'
+    :'Selling pace is the last '+ST.pace+' days: weeks with sizes out, ads off, a preorder or a launch read low or high, so compare with Since restock.');
   $('note').textContent=notes.join(' ');
   $('hitWord2').textContent=['','one of S, M, L','two of S, M, L','all of S, M, L'][ST.hit];
   $('hitWord').textContent=['','one of S, M, L is','two of S, M, L are','all of S, M, L are'][ST.hit].replace(/ (is|are)$/,'');
   $('bfWord').textContent=ST.bf>1?'sales x'+ST.bf:'switched off';
   var stS=(D.status||{}).stock||{};
+  /* one line per product for an agent to read: same numbers as the rows, most urgent first */
+  var day=function(d){return d==null?'not in 13 months':d<=0?'now':addDays(today,d)};
+  var lines=all.slice().sort(function(a,b){return rank[a.o.c]-rank[b.o.c]||(a.by==null?999:a.by)-(b.by==null?999:b.by)}).map(function(f){
+    return [f.p.title,{red:'REORDER NOW',amber:'REORDER WITHIN 30 DAYS OR GAP',blue:'REORDERED, COVERED',green:'FINE',grey:'NOT SELLING'}[f.o.c]||f.o.c,
+      f.o.l+': '+f.o.v+(f.o.s?' ('+f.o.s+')':''),'runs short '+day(f.hit)+(f.back!=null?', back '+addDays(today,f.back):''),
+      'in stock '+Math.max(0,f.p.inventory_total),'sizes out '+f.outNow+'/'+f.sizes.length,'pace '+r1(f.rate)+'/day',
+      'next stock '+(f.near.length?'+'+f.near[0].units+' on '+(f.near[0].eta||today)+' ('+(f.near[0].po||'')+')':'none')].join(' | ')});
+  $('agent').textContent=['STOCK RUNWAY · today '+today+' · stock from Shopify '+(stS.asAt||'unknown')+(stS.error||FAIL?' · WARNING: last refresh failed, numbers may be old':''),
+    'Settings: pace '+(ST.pace===RESTOCK?'since restock':ST.pace+' days')+' · Black Friday x'+ST.bf+' · restock takes '+ST.lead+' days · sales drop once '+ST.hit+' of S/M/L are out',
+    'Product | Status | Reorder by | Runs short | In stock | Sizes out | Pace | Next stock'].concat(lines).join('\n');
+  if(AGENT)$('agentBox').open=true;
   $('asat').className='asat'+(stS.stale||stS.error?' warn':'');
   $('asat').textContent='Stock from Shopify '+(stS.asAt?ago(stS.asAt):'')+(stS.error?' · last refresh failed':'')+(FAIL?' · offline, showing the last copy':'')+' · today is '+wdm(today);
 }
