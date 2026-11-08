@@ -476,7 +476,7 @@ function render(){
     return [f.p.title,{red:'REORDER NOW',amber:'REORDER WITHIN 30 DAYS OR GAP',blue:'REORDERED, COVERED',green:'FINE',grey:'NOT SELLING'}[f.o.c]||f.o.c,
       f.o.l+': '+f.o.v+(f.o.s?' ('+f.o.s+')':''),'runs short '+day(f.hit)+(f.back!=null?', back '+addDays(today,f.back):''),
       'in stock '+Math.max(0,f.p.inventory_total),'sizes out '+f.outNow+'/'+f.sizes.length,'pace '+r1(f.rate)+'/day',
-      'next stock '+(f.near.length?'+'+f.near[0].units+' on '+(f.near[0].eta||today)+' ('+(f.near[0].po||'')+')':'none')].join(' | ')});
+      'next stock '+(f.near.length?'+'+f.near[0].units+' on '+(f.near[0].eta||today)+(f.near[0].po?' ('+f.near[0].po+')':''):'none')].join(' | ')});
   $('agent').textContent=['STOCK RUNWAY · today '+today+' · stock from Shopify '+(stS.asAt||'unknown')+(stS.error||FAIL?' · WARNING: last refresh failed, numbers may be old':''),
     'Settings: pace '+(ST.pace===RESTOCK?'since restock':ST.pace+' days')+' · Black Friday x'+ST.bf+' · restock takes '+ST.lead+' days · sales drop once '+ST.hit+' of S/M/L are out',
     'Product | Status | Reorder by | Runs short | In stock | Sizes out | Pace | Next stock'].concat(lines).join('\n');
