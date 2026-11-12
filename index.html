@@ -1204,11 +1204,12 @@ function renderIncoming(){
 }
 
 /* ---------- HEALTH ---------- */
-/* Settings-driven defaults until the backend carries them: targets, injuries and Keith's programme, keyed by who. */
+/* Settings-driven defaults until the backend carries them: targets, injuries and the current programme, keyed by who. */
 var HEALTH_DEFAULTS = {
-  chris: { targets:{veg:6, fruit:2, protein:3, strengthDays:3, strengthNote:'Keith’s legs, 3 x week'},
-           injuries:[{name:'Right patellar tendon', status:'Keith’s programme since 24 Sep'},{name:'Hamstring tendons', status:'managing'},{name:'Right ankle', status:'managing'}],
-           programme:{name:'Keith De Souza, Lifecare Prahran, 24 Sep 2026', exercises:['BB squat 8, 6, 5, 5','SL leg press 4 x 5','BB RDL 3 x 6','SL seated calf raise 3 x 6','SL hamstring curl R 4 x 8, L 2 x 8','SL standing calf raise 3 x 15-20','SL seated knee extension holds 4 x 40 s']},
+  chris: { targets:{veg:6, fruit:2, protein:3, strengthDays:5, strengthNote:'5 gym + 3 runs a week'},
+           injuries:[{name:'Right patellar tendon', status:'knee 1/10'},{name:'Right hamstring tendons', status:'managing, curl R4/L2'},{name:'Right ankle', status:'managing'},{name:'Right shoulder / SC joint', status:'pain-free'}],
+           programme:{name:'Strength block from 16 Nov 2026 (rehab built in). Goal 100 kg+ bench and squat, 90 kg bench by mid-Dec. Now about 80 bench, 95 squat. RPE 7 max for the weeks of 16 and 23 Nov. Pain over 3/10 stops a lift.',
+             exercises:['Mon Lower A: back squat rep waves, RDL, ham curl R4/L2, knee isometric (progressing), single-leg bridge R3/L2','Tue Upper A: barbell bench (heavy), pull-ups, half-kneeling single-arm DB press, cable external rotation','Wed: easy cadence run','Thu: run club, then Upper B: barbell bench (volume), chest-supported DB row, laterals (right first, extra right set), arms','Fri Lower B (moderate)','Sat: long run or surf, then 30 min gym','Sun: 20-30 min mobility']},
            note:'Night-shift days are marked and never count against you.' },
   sophie: { targets:{veg:5, fruit:2, protein:2.5, strengthDays:2}, injuries:[] }
 };
@@ -1295,8 +1296,8 @@ function sleepScore(h, det){ if(!isNum(h)||h<=0) return null; det=det||{};
   var dr=(isNum(det.deep)?det.deep:0)+(isNum(det.rem)?det.rem:0), aw=isNum(det.awake)?det.awake:0, b=clockOf(det.sleepStart), bh=b? (b.h<12? b.h+24 : b.h) : null;
   var sc=50*Math.min(h/8,1) + (dr? 25*Math.min(dr/h/0.40,1) : 12) + 15*Math.max(0,1-aw/0.75) + (bh==null? 5 : 10*Math.max(0,Math.min(1,(26-bh)/2)));
   return Math.round(sc); }
-/* gym week: Keith's three leg sessions plus two upper days, Thursday is run club (a default, editable as gymPlan in the Sheet's Settings) */
-var GYM_PLAN=['Legs','Upper','Legs','Run club','Upper','Legs',''], GYM_WORDS=/legs|upper|gym|full|push|pull|lower/i;
+/* gym week: five gym days and three runs, from the 16 Nov block (a default, editable as gymPlan in the Sheet's Settings) */
+var GYM_PLAN=['Lower','Upper','Run','Upper','Lower','Gym','Mob'], GYM_WORDS=/legs|upper|gym|full|push|pull|lower/i;
 function gymPlan(){ var g=D.healthPlan&&D.healthPlan.gym; if(Array.isArray(g)&&g.length===7) return g; return GYM_PLAN; }
 function habitsFor(who){ D.habits=D.habits||{}; return D.habits[who]=D.habits[who]||{}; }
 function habitOn(who, date, h){ var x=habitsFor(who)[date]; return !!(x&&x[h]); }
@@ -1374,7 +1375,7 @@ function renderHealth(){
       '<div class="rstreak num">'+rs+'<small>day'+(rs===1?'':'s')+' in a row</small></div></div>'+
       '<div class="faint" style="font-size:12.5px;margin:6px 0 2px">'+(RL? esc(RL.join(' · ')) : 'Single-leg calf raises and the rest of FitBot’s routine. Paste the routine into the Sheet (Settings, rehabRoutine) and it shows here.')+'</div>'; }
   $('h-today').innerHTML = rh+'<div class="tl">'+(plan.join('')||'<div class="empty">Nothing planned. A walk counts.</div>')+'</div>'+
-    (gymToday&&P&&P.exercises? '<div class="sec"><span class="eyebrow">Programme</span><div class="faint" style="font-size:12.5px;margin-top:4px">'+esc(P.exercises.join(' · '))+'</div></div>':'')+
+    (gymToday&&P&&P.exercises? '<div class="sec"><span class="eyebrow">Programme</span>'+(P.name?'<div class="faint" style="font-size:12.5px;margin-top:4px">'+esc(P.name)+'</div>':'')+'<div class="faint" style="font-size:12.5px;margin-top:4px">'+P.exercises.map(function(x){ return esc(x); }).join('<br>')+'</div></div>':'')+
     (function(){ var lines=logs.map(function(l){ return '<div class="logline"><b>'+esc(l.t)+'</b> · '+esc(l.text)+'</div>'; }), nn=H.nightNote, said=logs.map(function(l){ return l.text; }).join(' | ');
       if(nn && nn!==said && said.indexOf(nn)<0) lines.unshift('<div class="logline"><b>Night check-in</b> · '+esc(nn)+'</div>');
       return lines.length? '<div class="sec"><span class="eyebrow">Logged today</span>'+lines.join('')+'</div>' : ''; })()+
@@ -1383,16 +1384,16 @@ function renderHealth(){
   });
   part(['h-chart'], function(){ drawHealthChart(H.days||[], who); });
 }
-/* Chris's gym week: five sessions (Keith's three leg days plus two upper), tap a day to tick it. A watch strength workout ticks it too. */
+/* Chris's gym week: five sessions, tap a day to tick it. A watch strength workout ticks it too. */
 function gymTile(H, W, base){
   var plan=gymPlan(), mon=mondayOf(base), done=0, cells='', target=plan.filter(function(p){ return GYM_WORDS.test(p); }).length||5;
   var watch={}; (H.workouts||[]).forEach(function(w){ if(STRENGTH_RX.test(w.name||'') && w.start) watch[String(w.start).slice(0,10)]=1; });
   for(var i=0;i<7;i++){ var d=addDays(mon,i), ds=ymd(d), on=habitOn('chris',ds,'gym')||!!watch[ds], fut=d>base, lab=plan[i]||'Rest';
     if(on) done++;
     cells+='<button type="button" class="gd'+(on?' on':'')+(fut?' fut':'')+(ds===ymd(base)?' now':'')+(GYM_WORDS.test(lab)?'':' rest')+'" data-gym="'+ds+'"'+(fut?' disabled':'')+' aria-pressed="'+on+'"><b>'+DOW[d.getDay()].charAt(0)+'</b><i>'+(on?'✓':'')+'</i><span>'+esc(lab)+'</span></button>'; }
-  var nx=H.nextStrength;
+  var nx=H.nextStrength, aim=(H.targets&&H.targets.strengthNote)||'aim 4 to 5';
   $('ht-strength').innerHTML='<div class="ch" style="margin-bottom:0"><span class="eyebrow">Gym this week</span></div><div class="big num">'+done+'<small>/ '+target+'</small></div>'+
-    '<div class="cap">'+(done>=target?'Week done. Nice.':done>=target-1?'One more and it’s a full week':'aim 4 to 5 · tap a day when it’s done')+'</div>'+
+    '<div class="cap">'+(done>=target?'Week done. Nice.':done>=target-1?'One more and it’s a full week':esc(aim)+' · tap a day when it’s done')+'</div>'+
     '<div class="gweek">'+cells+'</div>'+
     '<div class="second"><div><div class="v num">'+esc(plan[(base.getDay()+6)%7]||'Rest')+'</div><div class="l">Today’s plan</div></div><div><div class="v num">'+(nx||'–')+'</div><div class="l">Next in calendar</div></div></div>';
 }
