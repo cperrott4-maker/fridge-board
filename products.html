@@ -18,7 +18,7 @@
                   = the best of 7, 14 and 28 days, v5 6 Nov 2026); once 2 of S, M, L are out
                   (the "sales drop" setting), the pace from the last 7 days all three were in stock (script: full_stock),
                   because ads stop and sales fall away when the size run breaks (Chris, 3 Nov 2026)
-    Black Friday= pace x 3 (or x5, or off) from 17 to 30 Nov (sale opens Tue 17 Nov, runs to Cyber Monday)
+    Black Friday= pace x 3 (or x5, x7, x10, or off; x7 and x10 added 16 Nov 2026) from 17 to 30 Nov (sale opens Tue 17 Nov, runs to Cyber Monday)
     size mix    = 90-day sales by size, pulled toward the style's usual curve (thin samples lean on the curve)
     each day    = each size sells pace x its share (re-weighted over the sizes that could sell last week);
                   a size sells while it has stock, or on preorder while a shipment is due; shipments land on their date
@@ -179,7 +179,7 @@ h1{margin:2px 0 0;font:italic 400 32px/1.1 var(--fs);text-wrap:balance}
     </div>
     <div class="ctl">
       <span>Selling pace</span><span class="seg" id="segPace"><button data-v="7">7 days</button><button data-v="14">14 days</button><button data-v="28">28 days</button><button data-v="1">Since restock</button></span>
-      <span>Black Friday, 17-30 Nov</span><span class="seg" id="segBf"><button data-v="1">No lift</button><button data-v="3">Sales x3</button><button data-v="5">Sales x5</button></span>
+      <span>Black Friday, 17-30 Nov</span><span class="seg" id="segBf"><button data-v="1">No lift</button><button data-v="3">x3</button><button data-v="5">x5</button><button data-v="7">x7</button><button data-v="10">x10</button></span>
       <span>A restock takes</span><span class="seg" id="segLead"><button data-v="60">60 days</button><button data-v="65">65 days</button><button data-v="70">70 days</button></span>
       <span>Sales drop once</span><span class="seg" id="segHit"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></span>
     </div>
@@ -230,10 +230,10 @@ var GROUPS=[['Wrap Top',/^wrap top/i],['Daisy Asymmetric Top',/^daisy asymmetric
   ['Wave Denim',/^wave denim|^wave mini/i],['Daisy',/^daisy/i]];
 
 /* defaults (Chris, 8 Nov 2026): since restock, Black Friday x5, 65-day restock, sales drop once 2 of S/M/L are out.
-   A link can set them for one visit (?pace=1&bf=5&lead=65&hit=2), which is how Grokbot's Inventory agent opens the page. */
+   A link can set them for one visit (?pace=1&bf=5&lead=65&hit=2; bf takes 1, 3, 5, 7 or 10), which is how Grokbot's Inventory agent opens the page. */
 var D=null, LAST=0, FAIL='', ST={pace:1,bf:5,lead:65,hit:2,filter:''}, LINKSET=false, AGENT=new URLSearchParams(location.search).get('agent')==='1';
 try{var sv=JSON.parse(localStorage.getItem('stock.view3')||'null');if(sv)['pace','bf','lead','hit'].forEach(function(k){if(sv[k])ST[k]=sv[k]})}catch(e){}
-(function(){var q=new URLSearchParams(location.search),ok={pace:[1,7,14,28],bf:[1,3,5],lead:[60,65,70],hit:[1,2,3]};
+(function(){var q=new URLSearchParams(location.search),ok={pace:[1,7,14,28],bf:[1,3,5,7,10],lead:[60,65,70],hit:[1,2,3]};
   ['pace','bf','lead','hit'].forEach(function(k){var v=+q.get(k);if(ok[k].indexOf(v)>-1){ST[k]=v;LINKSET=true}})})();
 function save(){if(LINKSET)return;try{localStorage.setItem('stock.view3',JSON.stringify({pace:ST.pace,bf:ST.bf,lead:ST.lead,hit:ST.hit}))}catch(e){}}
 
