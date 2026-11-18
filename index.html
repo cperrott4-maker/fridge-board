@@ -223,7 +223,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--chris);outline-
 .sl-total .rows .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:2px}
 .sl-head{font-size:13px;color:var(--ink-2);margin-top:12px}
 .sl-chart{grid-column:1 / -1}
-.sl-bars{flex:1;min-height:200px}
+.sl-bars{flex:1;min-height:270px;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
+.sl-bars svg{position:absolute;left:0;top:0;display:block}   /* out of the box's sizing, so a redraw never grows it */
+.sl-pill.neutral{background:var(--fill)}
+.sl-basis{font-size:12.5px;color:var(--ink-3);margin-top:6px}
+.sw.sw-dot{border-radius:50%}
 /* STL numbers: six tiles read top-down (3 days big, 7 and 14 days under, no daily numbers), then the rolling 3-day MER curve and the 7-day dial */
 #stl-numbers{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr)}
 .ht:first-child{background:var(--sky-t)}
@@ -482,10 +486,12 @@ html.dimmed,html.dimmed body{background:#15171E}
 .aday .free{font-family:var(--fs);font-style:italic;color:var(--ink-3);font-size:14px;align-self:center}
 .aday.is-today .free{color:var(--choc);font-size:16px}
 @media (prefers-reduced-motion: reduce){ .bar .fillb{animation:none} *{transition:none!important} }
+@media (max-width: 480px){ .lg-x{display:none} }
 @media (max-width: 820px){
   body{overflow:auto} .app{height:auto}
   #home,#stl-numbers,#stl-content,#stl-product,#stl-ads,#stl-orders,#stl-sale,#health{grid-template-columns:1fr;grid-template-rows:none}
-  .sl-bars{min-height:240px}
+  .sl-bars{min-height:330px}
+  .sl-chart .ch{flex-wrap:wrap;row-gap:6px} .sl-chart .legend{gap:10px;font-size:12px} .sl-chart .legend span{white-space:nowrap}
   #stl-numbers{grid-template-columns:repeat(3,minmax(0,1fr))}
   .band{flex-direction:column;align-items:flex-start} .band-q{align-items:flex-start;text-align:left;max-width:none}
   .hweek{--cols:repeat(7,minmax(90px,1fr));overflow-x:auto}
@@ -651,6 +657,7 @@ html.dimmed,html.dimmed body{background:#15171E}
         <div class="sl-mer num" id="sl-mer">–</div>
         <div class="sl-pill" id="sl-pill">Waiting on today's numbers</div>
         <div class="sl-gauge" id="sl-gauge"></div>
+        <div class="sl-basis" id="sl-basis"></div>
       </div>
       <div class="sl-side">
         <div><div class="v num" id="sl-rev">–</div><div class="l">Revenue today</div><div class="faint" style="font-size:12.5px;margin-top:2px" id="sl-orders"></div></div>
@@ -670,8 +677,8 @@ html.dimmed,html.dimmed body{background:#15171E}
       </div>
     </section>
     <section class="card sl-chart">
-      <div class="ch"><span class="eyebrow">Each day, coloured by its MER</span>
-        <div class="legend"><span><i class="sw" style="background:var(--green-f)"></i>under 25% (aim)</span><span><i class="sw" style="background:var(--amber-f)"></i>25 to 30%</span><span><i class="sw" style="background:var(--red-f)"></i>over 30% (limit)</span></div></div>
+      <div class="ch"><span class="eyebrow">Each day of the sale</span>
+        <div class="legend"><span><i class="sw sw-dot" style="background:var(--green-f)"></i>MER under 25%<span class="lg-x">(aim)</span></span><span><i class="sw sw-dot" style="background:var(--amber-f)"></i>25 to 30%</span><span><i class="sw sw-dot" style="background:var(--red-f)"></i>over 30%<span class="lg-x">(limit)</span></span></div></div>
       <div class="sl-bars" id="sl-bars"></div>
       <div class="faint" id="sl-note" style="font-size:12px;margin-top:8px"></div>
     </section>
@@ -1047,15 +1054,33 @@ function saleData(){ var s=D&&D.stl&&D.stl.sale; return s&&s.days&&s.days.length
 function saleActive(){ var s=saleData(); if(!s) return false; var td=ymd(today0()); return td>=s.start && td<=s.end; }
 function hmFrom(iso){ var t=Date.parse(iso||''); if(isNaN(t)) return ''; var d=new Date(t); return (d.getHours()%12||12)+':'+String(d.getMinutes()).padStart(2,'0')+(d.getHours()<12?'am':'pm'); }
 function pct1(v){ return v==null||!isFinite(v)? '–' : v.toFixed(1)+'%'; }
+function merTxt(v){ return v==null||!isFinite(v)? '–' : v>=100? Math.round(v)+'%' : v.toFixed(1)+'%'; }
+/* today's revenue up to the moment Meta spend was posted, from the script's hourly rows (18 Nov 2026). The hour the post landed in
+   is pro-rated. null = cannot answer (no hourly rows, rows from another day, or spend posted after the hourly pull), and the caller
+   falls back to the whole of today's revenue as at the pull (then at most ~15 min earlier than the spend, so MER reads a touch high). */
+function saleRevAt(s, iso, td, full){
+  if(!s||!s.hours||!s.hours.length||!s.hoursAt||!iso||s.hoursDate!==td) return null;
+  var T=Date.parse(iso), A=Date.parse(s.hoursAt); if(isNaN(T)||isNaN(A)||T>=A) return null;
+  var sum=0, n=0;
+  s.hours.forEach(function(h){ var a= typeof h.t==='number'? h.t : Date.parse(String(h.t).replace(' ','T')); if(isNaN(a)) return; n++;
+    var b=Math.min(a+3600000, A); if(b<=a) return;
+    if(b<=T) sum+=Number(h.v)||0; else if(a<T) sum+=(Number(h.v)||0)*(T-a)/(b-a); });
+  if(!n) return null;
+  if(full!=null && sum>full*1.02+1) return null;   /* hourly and daily rows disagree: trust the daily total */
+  return sum;
+}
 function salePrep(){
   var s=saleData(); if(!s) return null; var td=ymd(today0());
   var days=s.days.map(function(d){ var st=d.date<td?'done':d.date===td?'today':'upcoming';
-    var mer= st!=='upcoming' && d.meta!=null && d.revenue>0 ? d.meta/d.revenue*100 : null;
-    return {date:d.date, state:st, revenue:st==='upcoming'?null:d.revenue, orders:st==='upcoming'?null:d.orders, meta:st==='upcoming'?null:d.meta, metaUpdated:d.metaUpdated, mer:mer}; });
+    var at= st==='today' && d.meta!=null ? saleRevAt(s, d.metaUpdated, td, d.revenue) : null, base= at!=null && at>0 ? at : d.revenue;
+    var mer= st!=='upcoming' && d.meta!=null && base>0 ? d.meta/base*100 : null;
+    return {date:d.date, state:st, revenue:st==='upcoming'?null:d.revenue, orders:st==='upcoming'?null:d.orders, meta:st==='upcoming'?null:d.meta, metaUpdated:d.metaUpdated, mer:mer,
+            matched: at!=null && at>0, revAt: at}; });
   var past=days.filter(function(d){ return d.state!=='upcoming'; });
   var rev=past.reduce(function(a,d){ return a+(d.revenue||0); },0), ord=past.reduce(function(a,d){ return a+(d.orders||0); },0);
   var withMeta=past.filter(function(d){ return d.meta!=null; });
-  var sp=withMeta.reduce(function(a,d){ return a+d.meta; },0), revM=withMeta.reduce(function(a,d){ return a+(d.revenue||0); },0);
+  /* the sale MER divides by the same revenue each day's own MER uses (today: revenue up to the spend post) */
+  var sp=withMeta.reduce(function(a,d){ return a+d.meta; },0), revM=withMeta.reduce(function(a,d){ return a+(d.matched? d.revAt : (d.revenue||0)); },0);
   return {s:s, days:days, today:days.filter(function(d){ return d.state==='today'; })[0]||null, rev:rev, orders:ord, spend:sp,
           mer: revM>0? sp/revM*100 : null, missingMeta: past.length-withMeta.length, left: days.filter(function(d){ return d.state==='upcoming'; }).length};
 }
@@ -1064,21 +1089,25 @@ function renderSale(){
   var t=P.today, z=t? saleZone(t.mer) : '';
   $('sl-today').className='card sl-today'+(z?' z-'+z:'');
   $('sl-mer').className='sl-mer num'+(z?' tone-'+z:'');
-  $('sl-mer').textContent= t&&t.mer!=null? pct1(t.mer) : '–';
-  var pill=$('sl-pill'); pill.className='sl-pill'+(z?' tone-'+z:'');
-  pill.textContent= !t? 'The sale is not on today' : t.meta==null? 'Waiting on today’s Meta spend' : z==='green'? 'On target, under 25%' : z==='amber'? 'Above the 25% aim, under the 30% limit' : 'Over the 30% limit';
+  $('sl-mer').textContent= t&&t.mer!=null? merTxt(t.mer) : '–';
+  var pill=$('sl-pill'); pill.className='sl-pill'+(z?' tone-'+z:' neutral');
+  pill.textContent= !t? 'The sale is not on today' : t.meta==null? 'Waiting on today’s Meta spend' : t.mer==null? 'Waiting on today’s revenue' :
+    z==='green'? 'On target, under 25%' : z==='amber'? 'Above the 25% aim, under the 30% limit' : 'Over the 30% limit';
   $('sl-rev').textContent= t? money(t.revenue) : '–';
   $('sl-orders').textContent= t? t.orders+(t.orders===1?' order':' orders') : '';
   $('sl-spend').textContent= t&&t.meta!=null? money(t.meta) : '–';
   var at=t&&t.metaUpdated? hmFrom(t.metaUpdated) : '', el=$('sl-spend-at');
   var old=t&&t.metaUpdated&&(Date.now()-Date.parse(t.metaUpdated))>75*60000;
-  el.textContent= !t? '' : t.meta==null? 'Grokbot posts it every 30 min' : at? 'as at '+at : '';
+  el.textContent= !t? '' : t.meta==null? 'None posted yet today' : at? 'as at '+at+(old? ', over an hour old' : '') : '';
   el.style.color= old? 'var(--amber)' : '';
+  /* say exactly what the MER divides, so the sum can be checked against the numbers beside it */
+  $('sl-basis').textContent= !t? '' : t.meta==null? 'Grokbot posts Meta spend every 30 min, 7am to 11:30pm' :
+    t.matched? 'Meta spend ÷ '+money(t.revAt)+' revenue, both up to '+at : 'Meta spend ÷ revenue today';
   drawSaleGauge(t&&t.mer!=null? t.mer : null);
   $('sl-title').textContent=(P.s.title||'Sale')+' so far';
   $('sl-total').textContent=money(P.rev);
   var sd=parseDay(P.s.start), ed=parseDay(P.s.end);
-  $('sl-days').textContent=sd.getDate()+' to '+ed.getDate()+' '+MON[ed.getMonth()]+' · '+(P.left? P.left+(P.left===1?' day':' days')+' to go' : 'sale finished');
+  $('sl-days').textContent=sd.getDate()+' to '+ed.getDate()+' '+MON[ed.getMonth()]+' · '+(P.left? P.left+(P.left===1?' day':' days')+' to go' : P.today? 'last day today' : 'sale finished');
   drawSaleTrack(P.rev);
   var sz=saleZone(P.mer);
   $('sl-smer').innerHTML= P.mer==null? '–' : '<span class="tone-'+sz+'">'+pct1(P.mer)+'</span>';
@@ -1086,45 +1115,134 @@ function renderSale(){
   $('sl-sorders').textContent= String(P.orders);
   /* headroom: what the rest of the sale can average and still finish under the 25% aim, if revenue reaches the 150k plan */
   var hr=$('sl-headroom');
-  if(P.left && P.rev<SALE.plan && P.mer!=null){ var rest=(SALE.plan*SALE.aim/100 - P.spend)/(SALE.plan-P.rev)*100;
+  if((P.left||P.today) && P.rev<SALE.plan && P.mer!=null){ var rest=(SALE.plan*SALE.aim/100 - P.spend)/(SALE.plan-P.rev)*100;
     hr.innerHTML= rest>0? 'To finish under 25% at '+('$'+SALE.plan/1000+'k')+', the rest of the sale can run at up to <b class="num">'+rest.toFixed(0)+'%</b>.' : 'Over budget for a 25% finish at '+('$'+SALE.plan/1000+'k')+'.'; }
   else hr.textContent='';
   drawSaleBars(P);
-  $('sl-note').textContent='Revenue is Shopify total sales incl GST, every 15 min. Meta spend is posted by Grokbot every 30 min. MER = Meta spend ÷ revenue.'+(P.missingMeta? ' '+P.missingMeta+(P.missingMeta===1?' day is':' days are')+' still missing Meta spend, so the sale MER leaves them out.' : '');
+  saleNote(P);
+}
+/* the line under the daily chart: the tapped day's numbers, else how to read it */
+var SALE_PICK=null;
+function saleNote(P){
+  var el=$('sl-note'); if(!el) return;
+  var d= SALE_PICK? P.days.filter(function(x){ return x.date===SALE_PICK && x.state!=='upcoming'; })[0] : null;
+  var miss= P.missingMeta? (P.missingMeta===1? '1 day is still missing Meta spend, so the sale MER leaves it out.' : P.missingMeta+' days are still missing Meta spend, so the sale MER leaves them out.') : '';
+  var box=$('sl-bars'), roomy= box && box.clientWidth>=480;
+  if(d){ var dt=parseDay(d.date);
+    el.innerHTML='<b style="color:var(--ink);font-weight:600">'+DOW[dt.getDay()]+' '+dt.getDate()+' '+MON[dt.getMonth()].slice(0,3)+(d.state==='today'?' (so far)':'')+'</b> · revenue '+money(d.revenue)+' from '+d.orders+(d.orders===1?' order':' orders')+
+      ' · Meta spend '+(d.meta==null?'not posted yet':money(d.meta))+' · MER '+(d.mer==null?'–':'<b class="tone-'+saleZone(d.mer)+'" style="font-weight:600">'+merTxt(d.mer)+'</b>'+
+      (d.matched? ' on '+money(d.revAt)+' revenue up to '+hmFrom(d.metaUpdated) : ''))+'.'+(miss?' '+miss:'');
+  } else el.textContent=(roomy? 'Tap a day for its numbers.' : 'Top: MER each day (Meta spend ÷ revenue). Bottom: revenue each day (Shopify total sales incl GST). Tap a day for its numbers.')+(miss?' '+miss:'');
 }
 function drawSaleGauge(v){
   var el=$('sl-gauge'); if(!el) return; if(v==null){ el.innerHTML=''; return; }
-  var W=360, top=Math.max(40, Math.ceil(v/5)*5+5), x=function(t){ return 6+Math.min(t,top)/top*(W-12); };
+  /* the scale stops at 60%: a 7am reading of 150% on a few hundred dollars pins the marker at the end instead of squashing the zones */
+  var W=360, top=Math.min(60, Math.max(40, Math.ceil(v/5)*5+5)), x=function(t){ return 6+Math.min(t,top)/top*(W-12); };
   var g='<rect x="'+x(0)+'" y="12" width="'+(x(SALE.aim)-x(0))+'" height="9" rx="4" fill="var(--green-f)"/>'+
         '<rect x="'+x(SALE.aim)+'" y="12" width="'+(x(SALE.limit)-x(SALE.aim))+'" height="9" fill="var(--amber-f)"/>'+
         '<rect x="'+x(SALE.limit)+'" y="12" width="'+(x(top)-x(SALE.limit))+'" height="9" rx="4" fill="var(--red-f)"/>';
   [SALE.aim,SALE.limit].forEach(function(t){ g+='<text x="'+x(t)+'" y="38" text-anchor="middle" font-size="11" fill="var(--ink-3)" '+FONT+'>'+t+'%</text>'; });
   var px=x(v); g+='<path d="M'+(px-6)+',1 L'+(px+6)+',1 L'+px+',10 Z" fill="var(--ink)"/><line x1="'+px+'" x2="'+px+'" y1="9" y2="23" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>';
+  if(v>top) g+='<text x="'+(W-6)+'" y="38" text-anchor="end" font-size="11" font-weight="600" fill="var(--red)" '+FONT+'>off the scale</text>';
   el.innerHTML='<svg viewBox="0 0 '+W+' 42" width="100%" role="img" aria-label="Today’s MER '+v.toFixed(1)+'% against the 25% aim and 30% limit">'+g+'</svg>';
 }
 function drawSaleTrack(rev){
   var el=$('sl-track'); if(!el) return; var W=Math.max(el.clientWidth,240), max=Math.max(SALE.targets[SALE.targets.length-1], rev)*1.04, x=function(v){ return v/max*W; };
-  var g='<rect x="0" y="6" width="'+W+'" height="14" rx="7" fill="var(--fill)"/><rect x="0" y="6" width="'+x(rev)+'" height="14" rx="7" fill="var(--choc)"/>';
-  SALE.targets.forEach(function(t,i){ var hit=rev>=t, last=i===SALE.targets.length-1;
-    g+='<line x1="'+x(t)+'" x2="'+x(t)+'" y1="2" y2="24" stroke="'+(hit?'var(--card)':'var(--ink-3)')+'" stroke-width="2"/>'+
-       '<text x="'+x(t)+'" y="40" text-anchor="'+(last&&x(t)>W-20?'end':'middle')+'" font-size="11" font-weight="'+(hit?600:500)+'" fill="'+(hit?'var(--choc)':'var(--ink-3)')+'" '+FONT+'>'+(t/1000)+'k</text>'; });
+  var g='<rect x="0" y="6" width="'+W+'" height="14" rx="7" fill="var(--fill)"/><rect x="0" y="6" width="'+x(rev)+'" height="14" rx="7" fill="var(--choc)"/>', lastX=-99;
+  SALE.targets.forEach(function(t,i){ var hit=rev>=t, last=i===SALE.targets.length-1, tx=x(t);
+    g+='<line x1="'+tx+'" x2="'+tx+'" y1="2" y2="24" stroke="'+(hit?'var(--card)':'var(--ink-3)')+'" stroke-width="2"/>';
+    if(tx-lastX>=32){ lastX=tx;   /* a big sale squeezes the targets together: skip a label that would print on its neighbour */
+      g+='<text x="'+tx+'" y="40" text-anchor="'+(last&&tx>W-20?'end':'middle')+'" font-size="11" font-weight="'+(hit?600:500)+'" fill="'+(hit?'var(--choc)':'var(--ink-3)')+'" '+FONT+'>'+(t/1000)+'k</text>'; } });
   el.innerHTML='<svg viewBox="0 0 '+W+' 44" width="100%" role="img" aria-label="'+money(rev)+' against the 100k, 130k, 150k and 180k targets">'+g+'</svg>';
 }
+/* the daily chart (v3, 18 Nov 2026): two panels on one shared row of days, one measure each, never two scales on one chart.
+   Top: MER each day, a dot on the green / amber / red bands (scale 35-60%, so the 25-30% band always has room; a day above 60%
+   sits as an arrow on the top edge with its real number). Bottom: revenue each day, chocolate bars with dollar labels.
+   Days still to come stay in the frame, faded, so it shows how far through the sale we are. Tap a day for its numbers.
+   Narrow screens label only today, the tapped day, the best day and any red day, so labels never collide. */
+var ZT={green:'var(--green)', amber:'var(--amber)', red:'var(--red)'};
+function saleK(v, short){ if(v==null) return ''; if(v<1000) return '$'+Math.round(v); return '$'+(short? Math.round(v/1000) : (v/1000).toFixed(1))+'k'; }
+function niceStep(max){ var c=[1000,2000,5000,10000,20000,25000,50000,100000]; for(var i=0;i<c.length;i++) if(max/c[i]<=3) return c[i]; return 200000; }
 function drawSaleBars(P){
   var box=$('sl-bars'); if(!box||!box.clientWidth) return;
-  var W=box.clientWidth, H=Math.max(box.clientHeight,200), padT=26, padB=36, ch=H-padT-padB, n=P.days.length, step=W/n, bw=Math.max(step*.62,6);
-  var maxR=Math.max.apply(null, P.days.map(function(d){ return d.revenue||0; }).concat([1]));
-  var g='<line x1="0" x2="'+W+'" y1="'+(padT+ch)+'" y2="'+(padT+ch)+'" stroke="var(--line)" stroke-width="1.5"/>';
-  P.days.forEach(function(d,i){ var cx=step*i+step/2, dt=parseDay(d.date), z=saleZone(d.mer);
-    if(d.state==='upcoming'){ g+='<rect x="'+(cx-bw/2)+'" y="'+(padT+ch-4)+'" width="'+bw+'" height="4" rx="2" fill="var(--fill)"/>'; }
-    else { var bh=Math.max(3,(d.revenue||0)/maxR*ch), col=z? ZC[z] : 'var(--choc)';
-      g+='<rect x="'+(cx-bw/2)+'" y="'+(padT+ch-bh)+'" width="'+bw+'" height="'+bh+'" rx="5" fill="'+col+'"'+(d.state==='today'?' opacity=".55" stroke="'+col+'" stroke-width="2" stroke-dasharray="4 3"':'')+'><title>'+d.date+': revenue '+money(d.revenue)+', '+d.orders+' orders, Meta '+money(d.meta)+', MER '+pct1(d.mer)+'</title></rect>';
-      if(d.mer!=null) g+='<text x="'+cx+'" y="'+(padT+ch-bh-7)+'" text-anchor="middle" font-size="'+(step<34?10:12.5)+'" font-weight="600" fill="var(--'+z+')" '+FONT+'>'+Math.round(d.mer)+'%</text>';
-      if(step>=52 && d.revenue) g+='<text x="'+cx+'" y="'+(padT+ch-8)+'" text-anchor="middle" font-size="11" font-weight="600" fill="var(--card)" '+FONT+'>'+kfmt(d.revenue).replace('$','')+'</text>';
-    }
-    g+='<text x="'+cx+'" y="'+(H-20)+'" text-anchor="middle" font-size="11" font-weight="'+(d.state==='today'?700:500)+'" fill="'+(d.state==='today'?'var(--ink)':'var(--ink-3)')+'" '+FONT+'>'+dt.getDate()+'</text>'+
-       '<text x="'+cx+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" fill="var(--ink-3)" '+FONT+'>'+['Su','Mo','Tu','We','Th','Fr','Sa'][dt.getDay()]+'</text>'; });
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Revenue for each sale day, coloured by MER">'+g+'</svg>';
+  var W=box.clientWidth, H=Math.max(box.clientHeight,250), n=P.days.length;
+  var gut=W<560? 42 : 52, plotW=W-gut-4, step=plotW/n, wide=step>=50, mid=step>=40, roomy=W>=480, few=step<26;
+  var fsV=wide?14:mid?12:10, fsB=wide?13:mid?11.5:10, fsD=wide?12.5:11, fsG=wide?12:10, fsT=wide?12:11;
+  var X=function(i){ return gut+step*i+step/2; };
+  var titleH=wide? 24 : 20, gap=18, axisH=mid? 26 : 36;
+  var avail=H-2*titleH-gap-axisH, mH=Math.max(90,Math.round(avail*.56)), rH=Math.max(80,avail-mH);
+  var mTop=titleH, mBot=mTop+mH, rTop=mBot+gap+titleH, rBot=rTop+rH;
+  var TXT=function(x,y,t,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'" font-size="'+(o.fs||11)+'" font-weight="'+(o.fw||500)+'" fill="'+(o.c||'var(--ink-3)')+'"'+
+    (o.halo?' paint-order="stroke" stroke="var(--card)" stroke-width="4" stroke-linejoin="round"':'')+' '+FONT+'>'+t+'</text>'; };
+  var HEAD=function(y,title,sub){ return '<text x="'+gut+'" y="'+y+'" font-size="'+fsT+'" '+FONT+'><tspan font-weight="600" fill="var(--ink-2)" letter-spacing=".05em">'+title+'</tspan>'+
+    (roomy? '<tspan dx="10" font-weight="500" fill="var(--ink-3)">'+sub+'</tspan>' : '')+'</text>'; };
+  var g='', top='';   /* top = panel titles, drawn over the highlights */
+  /* which days get value labels: all of them when there is room, else the ones that matter */
+  var bestI=-1, best=-1; P.days.forEach(function(d,i){ if(d.state!=='upcoming' && (d.revenue||0)>best){ best=d.revenue||0; bestI=i; } });
+  var labelled=function(d,i,kind){ if(!few) return true; return d.state==='today' || SALE_PICK===d.date || (kind==='rev'? i===bestI : saleZone(d.mer)==='red'); };
+  /* MER panel */
+  var CAP=60, mers=P.days.map(function(d){ return d.mer; }).filter(function(v){ return v!=null; }), mx=Math.max.apply(null,mers.concat([0]));
+  var mMax=Math.min(CAP, Math.max(35, Math.ceil((Math.min(mx,CAP)+8)/5)*5));
+  var ym=function(v){ return mBot-Math.min(Math.max(v,0),mMax)/mMax*mH; };
+  g+='<rect x="'+gut+'" y="'+ym(SALE.aim)+'" width="'+plotW+'" height="'+(mBot-ym(SALE.aim))+'" fill="var(--green-f)" fill-opacity=".13"/>'+
+     '<rect x="'+gut+'" y="'+ym(SALE.limit)+'" width="'+plotW+'" height="'+(ym(SALE.aim)-ym(SALE.limit))+'" fill="var(--amber-f)" fill-opacity=".24"/>'+
+     '<rect x="'+gut+'" y="'+mTop+'" width="'+plotW+'" height="'+(ym(SALE.limit)-mTop)+'" fill="var(--red-f)" fill-opacity=".12"/>';
+  var ly={}, sep=ym(SALE.aim)-ym(SALE.limit), need=fsG+2; ly[SALE.aim]=ym(SALE.aim)+4; ly[SALE.limit]=ym(SALE.limit)+4;
+  if(sep<need){ ly[SALE.aim]+=(need-sep)/2; ly[SALE.limit]-=(need-sep)/2; }   /* keep the 25% and 30% labels apart */
+  [SALE.aim,SALE.limit].forEach(function(t){ g+='<line x1="'+gut+'" x2="'+(gut+plotW)+'" y1="'+ym(t)+'" y2="'+ym(t)+'" stroke="'+(t===SALE.aim?'var(--green-f)':'var(--red-f)')+'" stroke-width="1" stroke-dasharray="3 3" opacity=".75"/>'+
+    TXT(gut-8, ly[t], t+'%', {a:'end', fs:fsG, fw:600, c:(t===SALE.aim?'var(--green)':'var(--red)')}); });
+  top+=HEAD(mTop-8, 'MER each day', 'Meta spend ÷ revenue');
+  /* revenue panel: gridlines at round dollar steps, labelled in the gutter, so the bars read as dollars */
+  var revs=P.days.map(function(d){ return d.revenue||0; }), rMaxV=Math.max.apply(null,revs.concat([1000]));
+  var rs=niceStep(rMaxV), rMax=Math.max(rMaxV*1.2, rs);
+  var yr=function(v){ return rBot-Math.min(v,rMax)/rMax*rH; };
+  var d0=P.days[0], lab0= d0 && d0.state!=='upcoming' && d0.revenue>0 && labelled(d0,0,'rev') ? saleK(d0.revenue,!mid) : '';
+  var lab0Y= lab0? Math.min(yr(d0.revenue),rBot-3)-6 : -99, lab0L= X(0)-lab0.length*fsB*.31;
+  for(var k=rs;k<rMax;k+=rs){ g+='<line x1="'+gut+'" x2="'+(gut+plotW)+'" y1="'+yr(k)+'" y2="'+yr(k)+'" stroke="var(--line)" stroke-width="1"/>';
+    if(!(lab0 && Math.abs(yr(k)+4-lab0Y)<fsB+1 && lab0L<gut+2)) g+=TXT(gut-8, yr(k)+4, saleK(k,true), {a:'end', fs:fsG}); }
+  g+='<line x1="'+gut+'" x2="'+(gut+plotW)+'" y1="'+rBot+'" y2="'+rBot+'" stroke="var(--ink-3)" stroke-opacity=".35" stroke-width="1.5"/>';
+  top+=HEAD(rTop-8, 'Revenue each day', 'Shopify total sales, incl GST');
+  /* today's column and a tapped day: one soft highlight through both panels */
+  P.days.forEach(function(d,i){ if(d.state==='today' || (SALE_PICK===d.date && d.state!=='upcoming'))
+    g+='<rect x="'+(X(i)-step/2+1)+'" y="'+(mTop-2)+'" width="'+(step-2)+'" height="'+(rBot-mTop+axisH)+'" rx="8" fill="var(--ink)" opacity="'+(SALE_PICK===d.date?'.09':'.05')+'"/>'; });
+  /* the MER line, then dots (an arrow on the top edge for a day over 60%) and labels on the side away from the line */
+  var pts=[]; P.days.forEach(function(d,i){ if(d.mer!=null) pts.push([X(i), ym(d.mer), i]); });
+  for(var j=1;j<pts.length;j++) if(pts[j][2]===pts[j-1][2]+1)
+    g+='<line x1="'+pts[j-1][0]+'" y1="'+pts[j-1][1]+'" x2="'+pts[j][0]+'" y2="'+pts[j][1]+'" stroke="var(--ink-3)" stroke-width="2" stroke-opacity=".45" stroke-linecap="round"/>';
+  var bw=Math.min(step*.58, 46), rr=Math.min(5, bw/2), labs='';
+  P.days.forEach(function(d,i){ var cx=X(i), z=saleZone(d.mer), isT=d.state==='today';
+    if(d.mer!=null){ var cy=ym(d.mer), over=d.mer>mMax;
+      if(over) g+='<path d="M'+(cx-7)+','+(cy+9)+' L'+cx+','+(cy+1)+' L'+(cx+7)+','+(cy+9)+' Z" fill="'+ZC[z]+'"/>';
+      else g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(wide?6:5)+'" fill="'+(isT?'var(--card)':ZC[z])+'" stroke="'+(isT?ZC[z]:'var(--card)')+'" stroke-width="'+(isT?2.5:2)+'"/>';
+      if(labelled(d,i,'mer')){
+        var nb=[P.days[i-1], P.days[i+1]].filter(function(x){ return x && x.mer!=null; }).map(function(x){ return x.mer; });
+        var above= over? false : !nb.length || d.mer>=nb.reduce(function(a,b){ return a+b; },0)/nb.length;
+        if(above && cy-12-fsV < mTop-2) above=false;
+        if(!above && cy+fsV+9 > mBot-2) above=true;
+        labs+=TXT(cx, above? cy-11 : cy+fsV+8, mid? merTxt(d.mer) : Math.round(d.mer)+'%', {fs:fsV, fw:700, c:ZT[z], halo:1}); } }
+    else if(isT && wide) labs+=TXT(cx, (mTop+mBot)/2+4, 'no spend yet', {fs:10.5, c:'var(--ink-3)'});
+    if(d.state!=='upcoming' && d.revenue>0){ var ty=Math.min(yr(d.revenue), rBot-3), h=rBot-ty, x0=cx-bw/2, r=Math.min(rr,h), dash=isT && h>=8;
+      g+='<path d="M'+x0+','+rBot+' V'+(ty+r)+' Q'+x0+','+ty+' '+(x0+r)+','+ty+' H'+(x0+bw-r)+' Q'+(x0+bw)+','+ty+' '+(x0+bw)+','+(ty+r)+' V'+rBot+' Z" fill="var(--choc)"'+
+         (isT? ' fill-opacity="'+(dash?'.45':'.7')+'"'+(dash?' stroke="var(--choc)" stroke-width="1.5" stroke-dasharray="4 3"':'') : '')+'/>';
+      if(labelled(d,i,'rev')) labs+=TXT(cx, ty-6, saleK(d.revenue, !mid), {fs:fsB, fw:600, c:'var(--ink-2)', halo:1}); }
+    var dt=parseDay(d.date), lc= isT? 'var(--ink)' : d.state==='upcoming'? 'var(--ink-3)' : 'var(--ink-2)', fw= isT? 700 : 500;
+    if(mid) g+=TXT(cx, rBot+18, isT? 'Today' : DOW[dt.getDay()]+' '+dt.getDate(), {fs:wide?fsD:11, fw:fw, c:lc});
+    else g+=TXT(cx, rBot+15, String(dt.getDate()), {fs:11, fw:fw, c:lc})+TXT(cx, rBot+29, isT? 'now' : 'SMTWTFS'.charAt(dt.getDay()), {fs:9.5, c:'var(--ink-3)'});
+  });
+  /* days still to come: fade them behind a veil of the card colour */
+  var fi=-1; P.days.forEach(function(d,i){ if(fi<0 && d.state==='upcoming') fi=i; });
+  if(fi>=0) g+='<rect x="'+(X(fi)-step/2)+'" y="'+(mTop-1)+'" width="'+(gut+plotW-(X(fi)-step/2))+'" height="'+(rBot-mTop+1)+'" fill="var(--card)" opacity=".55"/>';
+  g+=labs+top;
+  /* tap targets, one per day through both panels (bigger than the marks); a hover title for the desk */
+  P.days.forEach(function(d,i){ var dt=parseDay(d.date);
+    g+='<rect data-sday="'+d.date+'" x="'+(X(i)-step/2)+'" y="0" width="'+step+'" height="'+H+'" fill="transparent">'+
+       (d.state==='upcoming'? '' : '<title>'+DOW[dt.getDay()]+' '+dt.getDate()+': revenue '+money(d.revenue)+', '+d.orders+' orders, Meta '+(d.meta==null?'not posted':money(d.meta))+', MER '+merTxt(d.mer)+'</title>')+'</rect>'; });
+  var done=P.days.filter(function(d){ return d.state!=='upcoming'; });
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Two charts sharing the sale days. MER each day: '+
+    done.map(function(d){ return d.date.slice(8)+' '+merTxt(d.mer); }).join(', ')+'. Revenue each day: '+done.map(function(d){ return d.date.slice(8)+' '+money(d.revenue); }).join(', ')+'.">'+g+'</svg>';
+  box.onclick=function(e){ var t=e.target.closest? e.target.closest('[data-sday]') : null; if(!t) return; var ds=t.getAttribute('data-sday');
+    var d=P.days.filter(function(x){ return x.date===ds; })[0]; if(!d || d.state==='upcoming') return;
+    SALE_PICK= SALE_PICK===ds? null : ds; drawSaleBars(P); saleNote(P); };
 }
 /* the dial: the 7-day MER, nothing more granular (v6) */
 function drawDial(){
